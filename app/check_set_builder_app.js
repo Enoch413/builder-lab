@@ -81,6 +81,8 @@ const setDescriptionInput = document.getElementById('set-description')
 const questionSummary = document.getElementById('question-summary')
 const questionList = document.getElementById('question-list')
 const downloadFileName = document.getElementById('download-file-name')
+const questionEmpty = document.getElementById('question-empty')
+const questionWorkspace = document.getElementById('question-workspace')
 
 loadSetBtn.addEventListener('click', function(){
   setFileInput.click()
@@ -181,8 +183,12 @@ function updateCheckSetSummary(){
 }
 
 function renderQuestions(){
-  if(!checkSetState.questions.length){
-    questionList.innerHTML = '<div class="empty">왼쪽에서 문항 자동 생성이나 기존 세트 불러오기를 실행하면 여기서 바로 편집할 수 있습니다.</div>'
+  const hasQuestions = checkSetState.questions.length > 0
+  if(questionEmpty) questionEmpty.style.display = hasQuestions ? 'none' : 'flex'
+  if(questionWorkspace) questionWorkspace.style.display = hasQuestions ? 'flex' : 'none'
+
+  if(!hasQuestions){
+    questionList.innerHTML = ''
     return
   }
 

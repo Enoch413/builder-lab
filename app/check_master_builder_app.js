@@ -20,6 +20,8 @@ const setList = document.getElementById('set-list')
 const classCount = document.getElementById('class-count')
 const setCount = document.getElementById('set-count')
 const questionCount = document.getElementById('question-count')
+const setEmpty = document.getElementById('set-empty')
+const setWorkspace = document.getElementById('set-workspace')
 
 loadMasterBtn.addEventListener('click', function(){
   masterFileInput.click()
@@ -124,8 +126,12 @@ function renderClassRows(){
 }
 
 function renderCheckSetCards(){
-  if(!checkMasterState.checkSets.length){
-    setList.innerHTML = '<div class="empty">아직 CHECK 세트가 없습니다.<br>위에서 CHECK 세트 JSON을 하나 이상 추가해 주세요.</div>'
+  const hasSets = checkMasterState.checkSets.length > 0
+  if(setEmpty) setEmpty.style.display = hasSets ? 'none' : 'flex'
+  if(setWorkspace) setWorkspace.style.display = hasSets ? 'flex' : 'none'
+
+  if(!hasSets){
+    setList.innerHTML = ''
     return
   }
 

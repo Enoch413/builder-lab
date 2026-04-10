@@ -17,6 +17,7 @@
   --ink2:#3d3a34;
   --muted:#8a8478;
   --accent:#c8371a;
+  --header-ink:#163f42;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh}
@@ -30,7 +31,7 @@ body::before{
 }
 .wrap{position:relative;z-index:1;max-width:1440px;margin:0 auto;padding:28px 18px}
 .hd{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:18px;padding-bottom:12px;border-bottom:3px solid var(--ink)}
-.hd h1{font-family:'Bebas Neue',sans-serif;font-size:2.8rem;line-height:1;letter-spacing:2px;color:var(--accent)}
+.hd h1{font-family:'Bebas Neue',sans-serif;font-size:2.8rem;line-height:1;letter-spacing:2px;color:var(--header-ink)}
 .hd .sub{font-size:.74rem;color:var(--muted);letter-spacing:2px;text-transform:uppercase}
 .note{
   margin-bottom:16px;
@@ -111,29 +112,24 @@ iframe{
 <div class="wrap">
   <div class="hd">
     <h1>CONTENT BUILDER</h1>
-    <div class="sub">prep + check builder workspace</div>
   </div>
 
   <div class="tabbar">
     <button class="tab-btn active" type="button" data-panel="prep-set-panel">
       <span class="tab-kicker">TAB 01</span>
-      <span class="tab-title">PREP SET</span>
-      <span class="tab-desc">Passage and set builder</span>
+      <span class="tab-title">PREP SET BUILDER</span>
     </button>
     <button class="tab-btn" type="button" data-panel="prep-master-panel">
       <span class="tab-kicker">TAB 02</span>
       <span class="tab-title">PREP MASTER BUILDER</span>
-      <span class="tab-desc">Master session builder</span>
     </button>
     <button class="tab-btn" type="button" data-panel="check-set-panel">
       <span class="tab-kicker">TAB 03</span>
       <span class="tab-title">CHECK SET BUILDER</span>
-      <span class="tab-desc">Check set builder</span>
     </button>
     <button class="tab-btn" type="button" data-panel="check-master-panel">
       <span class="tab-kicker">TAB 04</span>
       <span class="tab-title">CHECK MASTER BUILDER</span>
-      <span class="tab-desc">Check master builder</span>
     </button>
   </div>
 

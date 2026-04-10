@@ -696,7 +696,6 @@ body:has(#class-screen[style*="display: flex"]) #header{display:none}
   <div id="setup-right">
   <div class="workspace-stage" id="setup-empty">
     <div class="workspace-kicker">READY TO BUILD</div>
-    <div class="workspace-copy">출제 구성과 학생당 지문 배정 방식은 이 영역에서 계속 조정합니다.</div>
   </div>
   <div class="question-config-panel">
     <div class="section-label">③ 출제 / 배정 구성</div>
@@ -3582,8 +3581,6 @@ function renderSetup(){
   const hasPassages = passages.length > 0;
   const emptyStage = document.getElementById('setup-empty') || document.querySelector('#setup-right .workspace-stage');
   const editorShell = document.getElementById('p-stack-shell');
-  const emptyCopy = emptyStage ? emptyStage.querySelector('.workspace-copy') : null;
-  if(emptyCopy) emptyCopy.textContent = '왼쪽에서 지문을 추가하면 이 영역에 바로 지문 편집 창이 열립니다.';
   if(emptyStage) emptyStage.style.display = hasPassages ? 'none' : 'flex';
   if(editorShell) editorShell.style.display = hasPassages ? 'block' : 'none';
 

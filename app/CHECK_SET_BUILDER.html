@@ -118,6 +118,33 @@ button,input,textarea,select{font:inherit}
   flex-direction:column;
   gap:16px;
 }
+.workspace-stage{
+  min-height:260px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  padding:36px 24px;
+  text-align:center;
+  background:transparent;
+  border:none;
+  box-shadow:none;
+}
+.workspace-kicker{
+  font-family:"Lexend","Plus Jakarta Sans",sans-serif;
+  font-size:28px;
+  font-weight:700;
+  letter-spacing:-.03em;
+  text-transform:uppercase;
+  color:var(--pl-ink-soft);
+}
+.workspace-copy{
+  margin-top:10px;
+  max-width:420px;
+  font-size:12px;
+  line-height:1.75;
+  color:var(--pl-muted);
+}
 .left-card,
 .question-editor-shell,
 .question-card,
@@ -491,7 +518,11 @@ button,input,textarea,select{font:inherit}
   </aside>
 
   <main id="right">
-    <section class="question-editor-shell">
+    <div class="workspace-stage" id="question-empty">
+      <div class="workspace-kicker">READY TO BUILD</div>
+    </div>
+
+    <section class="question-editor-shell" id="question-workspace" style="display:none">
       <div class="editor-shell-head">
         <div class="section-title">QUESTION EDITOR</div>
         <div class="editor-shell-title">문항 편집</div>
