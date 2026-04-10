@@ -17,13 +17,8 @@ document.getElementById('add-rotation-btn').addEventListener('click', function()
 })
 document.getElementById('master-input').addEventListener('change', onMasterLoad)
 document.getElementById('rotation-input').addEventListener('change', onRotationLoad)
-document.getElementById('target-all-btn').addEventListener('click', selectAllImportClasses)
-document.getElementById('target-clear-btn').addEventListener('click', clearImportClasses)
 document.getElementById('add-class-btn').addEventListener('click', addClassConfig)
 document.getElementById('generate-btn').addEventListener('click', generateBundle)
-document.getElementById('page-title').addEventListener('input', function(event){
-  bundleState.prepConfig.pageTitle = event.target.value
-})
 const globalPasswordInput = document.getElementById('global-password')
 if(globalPasswordInput){
   globalPasswordInput.addEventListener('input', function(event){
@@ -439,7 +434,6 @@ function toggleAssignment(setIndex, classId, passageIndex, checked){
 
 function renderAll(){
   syncRotationImportClassIds(rotationImportClassIds)
-  document.getElementById('page-title').value = bundleState.prepConfig.pageTitle
   if(globalPasswordInput){
     globalPasswordInput.value = bundleState.prepConfig.globalPassword
   }
@@ -476,24 +470,17 @@ function renderClassEditor(){
     return '' +
       '<div class="editor-card">' +
         '<div class="editor-head">' +
-          '<div>' +
-            '<div class="editor-index">Class ' + (index + 1) + '</div>' +
-            '<div class="editor-meta">모든 학습 세트에서 공통으로 사용하는 반 정보입니다.</div>' +
-          '</div>' +
+          '<div class="editor-index">Class ' + (index + 1) + '</div>' +
           '<button class="btn btn-ghost btn-sm" type="button" onclick="removeClassConfig(' + index + ')"' + (bundleState.classes.length === 1 ? ' disabled' : '') + '>삭제</button>' +
         '</div>' +
-        '<div>' +
-          '<div class="field-label">반 ID</div>' +
-          '<input type="text" value="' + escapeAttr(classInfo.id) + '" onchange="updateClassId(' + index + ', this.value)">' +
-        '</div>' +
-        '<div class="row-2">' +
+        '<div class="class-field-stack">' +
+          '<div>' +
+            '<div class="field-label">반 ID</div>' +
+            '<input type="text" value="' + escapeAttr(classInfo.id) + '" onchange="updateClassId(' + index + ', this.value)">' +
+          '</div>' +
           '<div>' +
             '<div class="field-label">반 이름</div>' +
             '<input type="text" value="' + escapeAttr(classInfo.name) + '" oninput="updateClassField(' + index + ', \'name\', this.value)">' +
-          '</div>' +
-          '<div>' +
-            '<div class="field-label">반 비밀번호 (선택)</div>' +
-            '<input type="text" value="' + escapeAttr(classInfo.password) + '" placeholder="비워 둬도 됩니다" oninput="updateClassField(' + index + ', \'password\', this.value)">' +
           '</div>' +
         '</div>' +
       '</div>'

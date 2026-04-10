@@ -115,7 +115,6 @@ button,input{font:inherit}
   flex-direction:column;
   gap:16px;
 }
-.left-hero,
 .step,
 .workspace-stage,
 .summary-card,
@@ -132,8 +131,6 @@ button,input{font:inherit}
   border-radius:22px;
   box-shadow:var(--pl-shadow-soft);
 }
-.left-hero{padding:18px 18px 16px}
-.left-hero-kicker,
 .field-label,
 .step-num,
 .summary-label{
@@ -143,19 +140,6 @@ button,input{font:inherit}
   letter-spacing:.12em;
   text-transform:uppercase;
   color:var(--pl-accent);
-}
-.left-hero-title{
-  margin-top:8px;
-  font-family:"Lexend","Plus Jakarta Sans",sans-serif;
-  font-size:1.5rem;
-  font-weight:700;
-  letter-spacing:-.03em;
-}
-.left-hero-copy{
-  margin-top:8px;
-  font-size:13px;
-  line-height:1.75;
-  color:var(--pl-muted);
 }
 .workspace-stage{
   min-height:260px;
@@ -202,6 +186,22 @@ button,input{font:inherit}
   line-height:1.75;
   color:var(--pl-muted);
 }
+.class-field-stack{
+  display:flex;
+  flex-direction:column;
+  gap:16px;
+  margin-top:16px;
+}
+.step-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:12px;
+}
+.step-head .step-title{
+  margin:0;
+}
 .row-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .summary-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
 .summary-card{padding:12px}
@@ -241,11 +241,12 @@ button,input{font:inherit}
   flex-wrap:wrap;
 }
 .toolbar{
-  justify-content:space-between;
-  align-items:center;
-  gap:12px;
-  margin-bottom:12px;
+  flex-direction:column;
+  align-items:stretch;
+  gap:10px;
+  margin:14px 0;
 }
+.toolbar .btn{width:100%}
 .target-grid{margin-bottom:14px}
 .target-chip{
   display:inline-flex;
@@ -390,6 +391,7 @@ input[type=text]:focus,input[type=date]:focus{
 }
 @media (max-width:820px){
   .summary-grid,.row-2{grid-template-columns:1fr}
+  .step-head{align-items:stretch;flex-direction:column}
 }
 @media (max-width:640px){
   #header{
@@ -418,25 +420,14 @@ input[type=text]:focus,input[type=date]:focus{
 
 <div id="layout">
   <aside id="left">
-    <div class="left-hero">
-      <div class="left-hero-kicker">PREP MASTER</div>
-      <div class="left-hero-title">여러 PREP 세션을 운영용 마스터로 묶는 허브</div>
-      <div class="left-hero-copy">왼쪽에서 기본 설정과 반 구성을 정리하고, 오른쪽에서 학습 세트 배정과 최종 배포 파일을 마무리합니다.</div>
-    </div>
-
     <section class="step">
       <div class="step-num">Step 01</div>
       <div class="step-title">JSON 불러오기</div>
-      <div class="step-desc">master session.json은 복원용이고, ROTATION 세션 JSON은 추가용입니다. ROTATION 세션을 넣기 전에 아래 반 배정을 먼저 선택하세요.</div>
       <div class="toolbar">
         <button class="btn btn-ghost" id="load-master-btn" type="button">master session 불러오기</button>
         <button class="btn btn-blue" id="add-rotation-btn" type="button">ROTATION 세션 추가</button>
       </div>
       <div class="field-label">다음 ROTATION 세션 기본 배정 반</div>
-      <div class="target-toolbar">
-        <button class="btn btn-ghost btn-sm" id="target-all-btn" type="button">전체 선택</button>
-        <button class="btn btn-ghost btn-sm" id="target-clear-btn" type="button">전체 해제</button>
-      </div>
       <div class="target-grid" id="import-class-targets"></div>
       <div class="file-zone status-box" id="file-zone">
         <div class="fz-title" id="fz-title">아직 불러온 파일이 없습니다.</div>
@@ -449,20 +440,8 @@ input[type=text]:focus,input[type=date]:focus{
 
     <section class="step">
       <div class="step-num">Step 02</div>
-      <div class="step-title">PREP 기본 설정</div>
-      <div class="step-desc">페이지 제목을 설정합니다.</div>
-      <div>
-        <div class="field-label">페이지 제목</div>
-        <input type="text" id="page-title" placeholder="예: 영어1 PREP">
-      </div>
-    </section>
-
-    <section class="step">
-      <div class="step-num">Step 03</div>
-      <div class="step-title">반 설정</div>
-      <div class="step-desc">반은 최대 8개까지 만들 수 있고, 모든 학습 세트에서 공통으로 사용합니다.</div>
-      <div class="toolbar">
-        <div class="hint">반 이름을 먼저 정하고, 필요하면 반 비밀번호를 넣은 뒤 각 학습 세트마다 어떤 지문을 보여줄지 선택합니다.</div>
+      <div class="step-head">
+        <div class="step-title">반 설정</div>
         <button class="btn btn-blue btn-sm" type="button" id="add-class-btn">반 추가</button>
       </div>
       <div class="editor-list" id="class-editor"></div>
@@ -476,14 +455,14 @@ input[type=text]:focus,input[type=date]:focus{
     </div>
     <div id="set-workspace" style="display:none">
       <section class="step">
-        <div class="step-num">Step 04</div>
+        <div class="step-num">Step 03</div>
         <div class="step-title">학습 세트 설정</div>
         <div class="step-desc">학습 세트마다 제목과 기간을 정하고, 각 반에 보여줄 지문을 따로 체크합니다. 기간이 지나면 학생 화면에서는 종료 상태로 보입니다.</div>
         <div class="editor-list" id="set-editor"></div>
       </section>
 
       <section class="step">
-        <div class="step-num">Step 05</div>
+        <div class="step-num">Step 04</div>
         <div class="step-title">master session.json 생성</div>
         <div class="step-desc">고정 PREP 페이지는 그대로 두고, 이 session.json 하나만 배포하면 여러 반과 여러 기간을 함께 운영할 수 있습니다.</div>
         <button class="btn btn-red" id="generate-btn" type="button" disabled>master session.json 다운로드</button>
