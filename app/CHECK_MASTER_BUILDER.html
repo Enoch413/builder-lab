@@ -48,7 +48,7 @@ body::before{
 }
 button,input,textarea{font:inherit}
 #header{
-  width:min(560px, calc(100% - 36px));
+  width:min(760px, calc(100% - 36px));
   margin:8px auto 18px;
   padding:14px 18px;
   display:flex;
@@ -69,6 +69,7 @@ button,input,textarea{font:inherit}
   font-weight:700;
   letter-spacing:-.03em;
   color:var(--pl-ink);
+  white-space:nowrap;
 }
 .badge{
   order:-1;
@@ -115,10 +116,8 @@ button,input,textarea{font:inherit}
   flex-direction:column;
   gap:16px;
 }
-.left-hero,
 .left-card,
-.content-card,
-.workspace-stage,
+.master-editor-shell,
 .status,
 .summary-card,
 .set-card,
@@ -128,8 +127,6 @@ button,input,textarea{font:inherit}
   border-radius:22px;
   box-shadow:var(--pl-shadow-soft);
 }
-.left-hero{padding:18px 18px 16px}
-.left-hero-kicker,
 .section-title,
 .field label,
 .summary-kicker{
@@ -140,46 +137,12 @@ button,input,textarea{font:inherit}
   text-transform:uppercase;
   color:var(--pl-accent);
 }
-.left-hero-title{
-  margin-top:8px;
-  font-family:"Lexend","Plus Jakarta Sans",sans-serif;
-  font-size:1.5rem;
-  font-weight:700;
-  letter-spacing:-.03em;
-}
-.left-hero-copy{
-  margin-top:8px;
-  font-size:13px;
-  line-height:1.75;
-  color:var(--pl-muted);
-}
-.left-card,.content-card{padding:18px}
-.workspace-stage{
-  min-height:260px;
+.left-card{padding:18px}
+.master-editor-shell{
+  min-height:360px;
   display:flex;
   flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  padding:36px 24px;
-  text-align:center;
-  background:transparent;
-  border:none;
-  box-shadow:none;
-}
-.workspace-kicker{
-  font-family:"Lexend","Plus Jakarta Sans",sans-serif;
-  font-size:28px;
-  font-weight:700;
-  letter-spacing:-.03em;
-  text-transform:uppercase;
-  color:var(--pl-ink-soft);
-}
-.workspace-copy{
-  margin-top:10px;
-  max-width:420px;
-  font-size:12px;
-  line-height:1.75;
-  color:var(--pl-muted);
+  padding:18px;
 }
 .section-head{
   display:flex;
@@ -201,7 +164,22 @@ button,input,textarea{font:inherit}
   line-height:1.75;
   color:var(--pl-muted);
 }
+.editor-shell-head{margin-bottom:14px}
+.editor-shell-title{
+  margin-top:6px;
+  font-family:"Lexend","Plus Jakarta Sans",sans-serif;
+  font-size:1rem;
+  font-weight:700;
+  color:var(--pl-ink);
+}
 .row{display:flex;gap:10px;flex-wrap:wrap}
+.setup-actions{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:10px;
+  width:100%;
+}
+.setup-actions .btn{width:100%}
 .field{display:flex;flex-direction:column;gap:8px}
 .field input,.field textarea{
   width:100%;
@@ -266,6 +244,7 @@ button,input,textarea{font:inherit}
   color:var(--pl-ink);
 }
 .class-list,.set-list{display:flex;flex-direction:column;gap:12px}
+.set-list{flex:1 1 auto}
 .class-row{
   display:grid;
   grid-template-columns:.8fr 1fr auto;
@@ -303,14 +282,21 @@ button,input,textarea{font:inherit}
   display:inline-flex;
   align-items:center;
   gap:8px;
-  padding:9px 12px;
+  padding:10px 12px;
   border-radius:999px;
   background:var(--pl-surface);
-  border:1px solid var(--pl-line);
   font-size:12px;
   font-weight:700;
+  color:var(--pl-ink-soft);
+  white-space:nowrap;
 }
-.class-check input{margin:0}
+.class-check input{
+  margin:0;
+  width:14px;
+  height:14px;
+  flex:0 0 auto;
+  accent-color:#1a5fc8;
+}
 .empty{
   padding:30px 20px;
   border-style:dashed;
@@ -318,6 +304,30 @@ button,input,textarea{font:inherit}
   color:var(--pl-muted);
   line-height:1.8;
 }
+#left .left-hero{display:none}
+#left .left-card:first-of-type .row{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:10px;
+  width:100%;
+}
+#left .left-card:first-of-type .row .btn{width:100%}
+#master-status{display:none}
+#left .left-card:nth-of-type(2) .section-desc,
+#left .left-card:nth-of-type(3) .section-desc,
+#right .content-card .section-desc{display:none}
+#right .workspace-stage{display:none}
+#right .content-card{
+  min-height:360px;
+  display:flex;
+  flex-direction:column;
+}
+#right .content-card .section-head{
+  margin-bottom:14px;
+  padding-bottom:14px;
+  border-bottom:1px solid var(--pl-line);
+}
+#right .set-list{flex:1 1 auto}
 code{
   font-family:"JetBrains Mono",monospace;
   font-size:11px;
@@ -340,7 +350,10 @@ code{
     border-radius:0 0 16px 16px;
     gap:12px;
   }
-  #header h1{font-size:1.45rem}
+  #header h1{
+    font-size:1.45rem;
+    white-space:normal;
+  }
   .badge{
     min-width:42px;
     height:38px;
@@ -372,9 +385,8 @@ code{
         <div>
           <div class="section-title">Setup</div>
           <div class="section-name">파일 불러오기</div>
-          <div class="section-desc">기존 마스터를 복원하거나 여러 CHECK 세트 JSON을 모아서 새 마스터를 만들 수 있습니다.</div>
         </div>
-        <div class="row">
+        <div class="setup-actions">
           <button class="btn btn-light" type="button" id="load-master-btn">기존 check_data.json 불러오기</button>
           <button class="btn btn-light" type="button" id="add-set-btn">CHECK 세트 추가</button>
           <button class="btn btn-red" type="button" id="generate-btn">check_data.json 다운로드</button>
@@ -428,7 +440,7 @@ code{
       <div class="workspace-copy">세트 배정과 공개 기간은 이 영역에서 계속 편집합니다. 왼쪽 반 목록을 바꾸면 체크박스도 함께 갱신됩니다.</div>
     </div>
 
-    <section class="content-card">
+    <section class="content-card master-editor-shell">
       <div class="section-head">
         <div>
           <div class="section-title">Assignments</div>
