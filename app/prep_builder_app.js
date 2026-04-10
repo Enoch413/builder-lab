@@ -98,26 +98,6 @@ function onFileLoad(event){
   event.target.value = ''
 }
 
-function createStudySetFromRotation(data, fileName){
-  const passages = Array.isArray(data.passages) ? deepClone(data.passages) : []
-  return {
-    id: 'set-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
-    title: deriveSetTitle(data, fileName),
-    sourceName: fileName || 'rotation-session.json',
-    startDate: '',
-    endDate: '',
-    passages: passages,
-    questionCounts: deepClone(data.questionCounts || {}),
-    savedAt: String(data.savedAt || '').trim(),
-    classAssignments: bundleState.classes.map(function(classInfo){
-      return {
-        classId: classInfo.id,
-        passageIndexes: passages.map(function(_, index){ return index })
-      }
-    })
-  }
-}
-
 function onMasterLoad(event){
   const file = event.target.files && event.target.files[0]
   if(!file) return
@@ -142,14 +122,9 @@ function onRotationLoad(event){
 
   readJsonFile(file, function(data){
     if(!Array.isArray(data.passages)) throw new Error('INVALID_ROTATION')
-    const targetClassIds = getSelectedImportClassIds()
-    if(!targetClassIds.length){
-      window.alert('새 ROTATION 세션을 추가할 반을 하나 이상 선택해 주세요.')
-      return
-    }
-    bundleState.studySets.push(createStudySetFromRotation(data, file.name, targetClassIds))
+    bundleState.studySets.push(createStudySetFromRotation(data, file.name))
     syncAssignments()
-    updateFileStatus(file.name, 'ROTATION 세션을 새 학습 세트로 추가했고, 선택한 반에 기본 배정했습니다.')
+    updateFileStatus(file.name, 'ROTATION 세션을 새 학습 세트로 추가했습니다. 반 배정은 오른쪽에서 설정해 주세요.')
     renderAll()
   }, '읽을 수 있는 ROTATION 세션 JSON이 아닙니다.')
 
@@ -172,6 +147,7 @@ function readJsonFile(file, onSuccess, errorMessage){
 function createStudySetFromRotation(data, fileName, defaultClassIds){
   const passages = Array.isArray(data.passages) ? deepClone(data.passages) : []
   const allowedClassIds = new Set(Array.isArray(defaultClassIds) ? defaultClassIds : [])
+  const allPassageIndexes = passages.map(function(_, index){ return index })
   return {
     id: 'set-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
     title: deriveSetTitle(data, fileName),
@@ -185,7 +161,7 @@ function createStudySetFromRotation(data, fileName, defaultClassIds){
       return {
         classId: classInfo.id,
         passageIndexes: allowedClassIds.has(classInfo.id)
-          ? passages.map(function(_, index){ return index })
+          ? allPassageIndexes.slice()
           : []
       }
     })
@@ -277,6 +253,35 @@ function syncAssignments(){
       }
     })
   })
+}
+
+function getAllPassageIndexes(studySet){
+  const passageCount = Array.isArray(studySet && studySet.passages) ? studySet.passages.length : 0
+  return Array.from({ length: passageCount }, function(_, index){ return index })
+}
+
+function getClassAssignment(studySet, classId){
+  return (studySet.classAssignments || []).find(function(assignment){
+    return assignment.classId === classId
+  }) || null
+}
+
+function getAssignmentIndexes(studySet, classId){
+  const assignment = getClassAssignment(studySet, classId)
+  return normalizeNumberList(
+    assignment && assignment.passageIndexes,
+    Array.isArray(studySet && studySet.passages) ? studySet.passages.length : 0
+  )
+}
+
+function isStudySetAssignedToClass(studySet, classId){
+  return getAssignmentIndexes(studySet, classId).length > 0
+}
+
+function getAssignedClassCount(studySet){
+  return bundleState.classes.filter(function(classInfo){
+    return isStudySetAssignedToClass(studySet, classInfo.id)
+  }).length
 }
 
 function syncRotationImportClassIds(preferredIds){
@@ -407,8 +412,10 @@ function clearImportClasses(){
 }
 
 function renderImportClassTargets(){
-  const targetIds = syncRotationImportClassIds(rotationImportClassIds)
   const container = document.getElementById('import-class-targets')
+  if(!container) return
+
+  const targetIds = syncRotationImportClassIds(rotationImportClassIds)
   if(!bundleState.classes.length){
     container.innerHTML = '<div class="target-empty">반을 먼저 추가해 주세요.</div>'
     return
@@ -506,24 +513,19 @@ function updateStudySetField(index, field, value){
   bundleState.studySets[index][field] = value
 }
 
-function toggleAssignment(setIndex, classId, passageIndex, checked){
+function toggleSetClassAssignment(setIndex, classId, checked){
   const studySet = bundleState.studySets[setIndex]
   if(!studySet) return
 
-  const assignment = studySet.classAssignments.find(function(item){
-    return item.classId === classId
-  })
+  const assignment = getClassAssignment(studySet, classId)
   if(!assignment) return
 
-  const valueSet = new Set(assignment.passageIndexes)
-  if(checked) valueSet.add(passageIndex)
-  else valueSet.delete(passageIndex)
+  const normalizedIndexes = normalizeNumberList(assignment.passageIndexes, studySet.passages.length)
+  assignment.passageIndexes = checked
+    ? (normalizedIndexes.length ? normalizedIndexes : getAllPassageIndexes(studySet))
+    : []
 
-  assignment.passageIndexes = Array.from(valueSet).sort(function(a, b){ return a - b })
-  preserveViewport(function(){
-    renderSummary()
-    renderSetEditor()
-  })
+  preserveViewport(renderSetEditor)
 }
 
 function renderAll(){
@@ -594,11 +596,10 @@ function renderSetEditor(){
     return
   }
 
-  syncStudySetUiState()
-
   document.getElementById('set-editor').innerHTML = bundleState.studySets.map(function(studySet, setIndex){
     const canMoveUp = setIndex > 0
     const canMoveDown = setIndex < bundleState.studySets.length - 1
+    const assignedClassCount = getAssignedClassCount(studySet)
     return '' +
       '<div class="editor-card">' +
         '<div class="editor-head">' +
@@ -628,47 +629,29 @@ function renderSetEditor(){
             '</div>' +
           '</div>' +
           '<div class="set-note">둘 다 비워 두면 항상 열립니다.</div>' +
-        '</div>' +
-        '<div class="assign-list" style="margin-top:14px">' +
-          bundleState.classes.map(function(classInfo){
-            return renderAssignmentCard(studySet, setIndex, classInfo)
-          }).join('') +
+          '<div>' +
+            '<div class="field-label">배정 반</div>' +
+            '<div class="set-assignment-meta">' + assignedClassCount + '개 반 배정</div>' +
+            '<div class="class-checks">' + renderSetClassChecks(studySet, setIndex) + '</div>' +
+          '</div>' +
         '</div>' +
       '</div>'
   }).join('')
 }
 
-function renderAssignmentCard(studySet, setIndex, classInfo){
-  const assignment = studySet.classAssignments.find(function(item){
-    return item.classId === classInfo.id
-  }) || { passageIndexes: [] }
-  const expanded = isAssignmentCardExpanded(studySet, classInfo.id)
+function renderSetClassChecks(studySet, setIndex){
+  if(!bundleState.classes.length){
+    return '<div class="empty-box" style="width:100%">먼저 왼쪽에서 반을 추가해 주세요.</div>'
+  }
 
-  return '' +
-    '<div class="assign-card' + (expanded ? '' : ' is-collapsed') + '">' +
-      '<div class="assign-head">' +
-        '<div>' +
-          '<div class="assign-name">' + escapeHtml(classInfo.name) + '</div>' +
-          '<div class="assign-meta">' + assignment.passageIndexes.length + '개 지문 선택</div>' +
-        '</div>' +
-        '<button class="btn btn-ghost btn-sm" type="button" onclick="toggleAssignmentCard(' + setIndex + ', \'' + escapeAttr(classInfo.id) + '\')">' + (expanded ? '접기' : '펼치기') + '</button>' +
-      '</div>' +
-      '<div class="assign-body">' +
-        '<div class="passage-grid">' +
-          studySet.passages.map(function(passage, passageIndex){
-            const checked = assignment.passageIndexes.indexOf(passageIndex) >= 0
-            return '' +
-              '<label class="passage-option">' +
-                '<input type="checkbox" ' + (checked ? 'checked ' : '') + 'onchange="toggleAssignment(' + setIndex + ', \'' + escapeAttr(classInfo.id) + '\', ' + passageIndex + ', this.checked)">' +
-                '<div>' +
-                  '<div class="passage-title">' + escapeHtml(getPassageTitle(passage, passageIndex)) + '</div>' +
-                  '<div class="passage-preview">' + escapeHtml(getPassagePreview(passage)) + '</div>' +
-                '</div>' +
-              '</label>'
-          }).join('') +
-        '</div>' +
-      '</div>' +
-    '</div>'
+  return bundleState.classes.map(function(classInfo){
+    const checked = isStudySetAssignedToClass(studySet, classInfo.id)
+    return '' +
+      '<label class="class-check">' +
+        '<input type="checkbox" ' + (checked ? 'checked ' : '') + 'onchange="toggleSetClassAssignment(' + setIndex + ', \'' + escapeAttr(classInfo.id) + '\', this.checked)">' +
+        '<span>' + escapeHtml(classInfo.name) + '</span>' +
+      '</label>'
+  }).join('')
 }
 
 function generateBundle(){

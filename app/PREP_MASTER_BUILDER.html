@@ -332,12 +332,12 @@ input[type=text]:focus,input[type=date]:focus{
   line-height:1.75;
   color:var(--pl-muted);
 }
-.editor-list,.assign-list,.passage-grid{display:grid;gap:14px}
+.editor-list{display:grid;gap:14px}
 .editor-card{
   padding:14px;
   background:linear-gradient(180deg, rgba(247,244,238,.82), rgba(255,255,255,.96));
 }
-.editor-head,.assign-head{
+.editor-head{
   display:flex;
   justify-content:space-between;
   gap:12px;
@@ -364,19 +364,37 @@ input[type=text]:focus,input[type=date]:focus{
   line-height:1.7;
   color:var(--pl-muted);
 }
-.assign-card{padding:12px}
-.assign-body{margin-top:10px}
-.assign-card.is-collapsed .assign-head{margin-bottom:0}
-.assign-card.is-collapsed .assign-body{display:none}
-.assign-name,.passage-title{font-size:13px;font-weight:800;color:var(--pl-ink)}
-.passage-option{
+.class-checks{
   display:flex;
+  flex-wrap:wrap;
   gap:10px;
-  align-items:flex-start;
-  padding:10px 12px;
-  background:var(--pl-surface);
+  margin-top:10px;
 }
-.passage-option input{margin-top:4px}
+.class-check{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:10px 12px;
+  border-radius:999px;
+  background:var(--pl-surface);
+  font-size:12px;
+  font-weight:700;
+  color:var(--pl-ink-soft);
+  white-space:nowrap;
+}
+.class-check input{
+  margin:0;
+  width:14px;
+  height:14px;
+  flex:0 0 auto;
+  accent-color:#1a5fc8;
+}
+.set-assignment-meta{
+  margin-top:4px;
+  font-size:12px;
+  line-height:1.7;
+  color:var(--pl-muted);
+}
 .empty-box{
   padding:18px;
   text-align:center;
@@ -449,8 +467,6 @@ input[type=text]:focus,input[type=date]:focus{
         <button class="btn btn-ghost" id="load-master-btn" type="button">master session 불러오기</button>
         <button class="btn btn-blue" id="add-rotation-btn" type="button">ROTATION 세션 추가</button>
       </div>
-      <div class="field-label">다음 ROTATION 세션 기본 배정 반</div>
-      <div class="target-grid" id="import-class-targets"></div>
       <div class="file-zone status-box" id="file-zone">
         <div class="fz-title" id="fz-title">아직 불러온 파일이 없습니다.</div>
         <div class="fz-sub" id="fz-sub">master는 현재 설정 복원용, ROTATION 세션은 학습 세트 추가용으로 사용합니다.</div>
@@ -479,7 +495,7 @@ input[type=text]:focus,input[type=date]:focus{
       <section class="step">
         <div class="step-num">Step 03</div>
         <div class="step-title">학습 세트 설정</div>
-        <div class="step-desc">학습 세트마다 제목과 기간을 정하고, 각 반에 보여줄 지문을 따로 체크합니다. 기간이 지나면 학생 화면에서는 종료 상태로 보입니다.</div>
+        <div class="step-desc">학습 세트마다 제목과 기간을 정하고, 공개할 반만 체크합니다. 기간이 지나면 학생 화면에서는 종료 상태로 보입니다.</div>
         <div class="editor-list" id="set-editor"></div>
       </section>
 
