@@ -1,0 +1,287 @@
+﻿{
+    "kind":  "check-set",
+    "savedAt":  "2026-04-08T01:20:00+09:00",
+    "id":  "sample-check-mixed-25",
+    "title":  "예시 CHECK 세트 25문항",
+    "description":  "객관식 20문항과 주관식 5문항이 섞인 테스트용 CHECK 세트입니다.",
+    "questions":  [
+                      {
+                          "id":  "q1",
+                          "type":  "객관식",
+                          "prompt":  "문항 1",
+                          "answer":  "3",
+                          "acceptableAnswers":  [
+
+                                                ],
+                          "explanation":  "예시 해설입니다. 1번 문항의 정답은 3번으로 설정되어 있습니다.",
+                          "problemType":  "주제"
+                      },
+                      {
+                          "id":  "q2",
+                          "type":  "객관식",
+                          "prompt":  "문항 2",
+                          "answer":  "1",
+                          "acceptableAnswers":  [
+
+                                                ],
+                          "explanation":  "예시 해설입니다. 2번 문항의 정답은 1번입니다.",
+                          "problemType":  "제목"
+                      },
+                      {
+                          "id":  "q3",
+                          "type":  "객관식",
+                          "prompt":  "문항 3",
+                          "answer":  "4",
+                          "acceptableAnswers":  [
+
+                                                ],
+                          "explanation":  "예시 해설입니다. 3번 문항의 정답은 4번입니다.",
+                          "problemType":  "주장"
+                      },
+                      {
+                          "id":  "q4",
+                          "type":  "객관식",
+                          "prompt":  "문항 4",
+                          "answer":  "2",
+                          "acceptableAnswers":  [
+
+                                                ],
+                          "explanation":  "예시 해설입니다. 4번 문항의 정답은 2번입니다.",
+                          "problemType":  "요지"
+                      },
+                      {
+                          "id":  "q5",
+                          "type":  "객관식",
+                          "prompt":  "문항 5",
+                          "answer":  "5",
+                          "acceptableAnswers":  [
+
+                                                ],
+                          "explanation":  "예시 해설입니다. 5번 문항의 정답은 5번입니다.",
+                          "problemType":  "목적"
+                      },
+                      {
+                          "id":  "q6",
+                          "type":  "객관식",
+                          "prompt":  "문항 6",
+                          "answer":  "2",
+                          "acceptableAnswers":  [
+
+                                                ],
+                          "explanation":  "예시 해설입니다. 6번 문항의 정답은 2번입니다.",
+                          "problemType":  "요약"
+                      },
+                      {
+                          "id":  "q7",
+                          "type":  "객관식",
+                          "prompt":  "문항 7",
+                          "answer":  "4",
+                          "acceptableAnswers":  [
+
+                                                ],
+                          "explanation":  "예시 해설입니다. 7번 문항의 정답은 4번입니다.",
+                          "problemType":  "내용일치"
+                      },
+                      {
+                          "id":  "q8",
+                          "type":  "객관식",
+                          "prompt":  "문항 8",
+                          "answer":  "1",
+                          "acceptableAnswers":  [
+
+                                                ],
+                          "explanation":  "예시 해설입니다. 8번 문항의 정답은 1번입니다.",
+                          "problemType":  "함축의미"
+                      },
+                      {
+                          "id":  "q9",
+                          "type":  "객관식",
+                          "prompt":  "문항 9",
+                          "answer":  "5",
+                          "acceptableAnswers":  [
+
+                                                ],
+                          "explanation":  "예시 해설입니다. 9번 문항의 정답은 5번입니다.",
+                          "problemType":  "심경"
+                      },
+                      {
+                          "id":  "q10",
+                          "type":  "객관식",
+                          "prompt":  "문항 10",
+                          "answer":  "3",
+                          "acceptableAnswers":  [
+
+                                                ],
+                          "explanation":  "예시 해설입니다. 10번 문항의 정답은 3번입니다.",
+                          "problemType":  "빈칸"
+                      },
+                      {
+                          "id":  "q11",
+                          "type":  "객관식",
+                          "prompt":  "문항 11",
+                          "answer":  "2",
+                          "acceptableAnswers":  [
+
+                                                ],
+                          "explanation":  "예시 해설입니다. 11번 문항의 정답은 2번입니다.",
+                          "problemType":  "연결사"
+                      },
+                      {
+                          "id":  "q12",
+                          "type":  "객관식",
+                          "prompt":  "문항 12",
+                          "answer":  "5",
+                          "acceptableAnswers":  [
+
+                                                ],
+                          "explanation":  "예시 해설입니다. 12번 문항의 정답은 5번입니다.",
+                          "problemType":  "무관"
+                      },
+                      {
+                          "id":  "q13",
+                          "type":  "객관식",
+                          "prompt":  "문항 13",
+                          "answer":  "1",
+                          "acceptableAnswers":  [
+
+                                                ],
+                          "explanation":  "예시 해설입니다. 13번 문항의 정답은 1번입니다.",
+                          "problemType":  "순서"
+                      },
+                      {
+                          "id":  "q14",
+                          "type":  "객관식",
+                          "prompt":  "문항 14",
+                          "answer":  "4",
+                          "acceptableAnswers":  [
+
+                                                ],
+                          "explanation":  "예시 해설입니다. 14번 문항의 정답은 4번입니다.",
+                          "problemType":  "삽입"
+                      },
+                      {
+                          "id":  "q15",
+                          "type":  "객관식",
+                          "prompt":  "문항 15",
+                          "answer":  "3",
+                          "acceptableAnswers":  [
+
+                                                ],
+                          "explanation":  "예시 해설입니다. 15번 문항의 정답은 3번입니다.",
+                          "problemType":  "밑줄어법"
+                      },
+                      {
+                          "id":  "q16",
+                          "type":  "객관식",
+                          "prompt":  "문항 16",
+                          "answer":  "2",
+                          "acceptableAnswers":  [
+
+                                                ],
+                          "explanation":  "예시 해설입니다. 16번 문항의 정답은 2번입니다.",
+                          "problemType":  "밑줄어휘"
+                      },
+                      {
+                          "id":  "q17",
+                          "type":  "객관식",
+                          "prompt":  "문항 17",
+                          "answer":  "5",
+                          "acceptableAnswers":  [
+
+                                                ],
+                          "explanation":  "예시 해설입니다. 17번 문항의 정답은 5번입니다.",
+                          "problemType":  "선택어휘"
+                      },
+                      {
+                          "id":  "q18",
+                          "type":  "객관식",
+                          "prompt":  "문항 18",
+                          "answer":  "1",
+                          "acceptableAnswers":  [
+
+                                                ],
+                          "explanation":  "예시 해설입니다. 18번 문항의 정답은 1번입니다.",
+                          "problemType":  "선택어법"
+                      },
+                      {
+                          "id":  "q19",
+                          "type":  "객관식",
+                          "prompt":  "문항 19",
+                          "answer":  "4",
+                          "acceptableAnswers":  [
+
+                                                ],
+                          "explanation":  "예시 해설입니다. 19번 문항의 정답은 4번입니다.",
+                          "problemType":  "기타"
+                      },
+                      {
+                          "id":  "q20",
+                          "type":  "객관식",
+                          "prompt":  "문항 20",
+                          "answer":  "3",
+                          "acceptableAnswers":  [
+
+                                                ],
+                          "explanation":  "예시 해설입니다. 20번 문항의 정답은 3번입니다.",
+                          "problemType":  "주제"
+                      },
+                      {
+                          "id":  "q21",
+                          "type":  "주관식",
+                          "prompt":  "문항 21",
+                          "answer":  "by reducing cognitive load",
+                          "acceptableAnswers":  [
+                                                    "to reduce cognitive load",
+                                                    "reducing cognitive load"
+                                                ],
+                          "explanation":  "예시 해설입니다. 핵심 표현이 cognitive load를 줄인다는 의미로 들어가면 정답 처리할 수 있습니다.",
+                          "problemType":  "제목"
+                      },
+                      {
+                          "id":  "q22",
+                          "type":  "주관식",
+                          "prompt":  "문항 22",
+                          "answer":  "liminal space",
+                          "acceptableAnswers":  [
+                                                    "a liminal space"
+                                                ],
+                          "explanation":  "예시 해설입니다. 핵심 답은 liminal space입니다.",
+                          "problemType":  "주장"
+                      },
+                      {
+                          "id":  "q23",
+                          "type":  "주관식",
+                          "prompt":  "문항 23",
+                          "answer":  "personification",
+                          "acceptableAnswers":  [
+                                                    "uses personification",
+                                                    "personification is used"
+                                                ],
+                          "explanation":  "예시 해설입니다. 의인법을 지칭하는 표현이면 정답 처리 가능합니다.",
+                          "problemType":  "요지"
+                      },
+                      {
+                          "id":  "q24",
+                          "type":  "주관식",
+                          "prompt":  "문항 24",
+                          "answer":  "not only A but also B",
+                          "acceptableAnswers":  [
+                                                    "not only a but also b"
+                                                ],
+                          "explanation":  "예시 해설입니다. not only A but also B 구조를 정확히 쓰면 됩니다.",
+                          "problemType":  "목적"
+                      },
+                      {
+                          "id":  "q25",
+                          "type":  "주관식",
+                          "prompt":  "문항 25",
+                          "answer":  "the author criticizes urban isolation",
+                          "acceptableAnswers":  [
+                                                    "urban isolation",
+                                                    "the author criticizes isolation in the city"
+                                                ],
+                          "explanation":  "예시 해설입니다. 도시의 고립감을 비판한다는 핵심 의미가 들어가면 됩니다.",
+                          "problemType":  "요약"
+                      }
+                  ]
+}

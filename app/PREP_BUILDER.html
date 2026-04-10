@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CONTENT BUILDER</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=JetBrains+Mono:wght@400;700&family=Noto+Sans+KR:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f2eb;
+  --surface:#fff;
+  --card:#faf8f3;
+  --border:#e0dbd0;
+  --ink:#1a1814;
+  --ink2:#3d3a34;
+  --muted:#8a8478;
+  --accent:#c8371a;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh}
+body::before{
+  content:'';
+  position:fixed;
+  inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.04'/%3E%3C/svg%3E");
+  opacity:.35;
+  pointer-events:none;
+}
+.wrap{position:relative;z-index:1;max-width:1440px;margin:0 auto;padding:28px 18px}
+.hd{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:18px;padding-bottom:12px;border-bottom:3px solid var(--ink)}
+.hd h1{font-family:'Bebas Neue',sans-serif;font-size:2.8rem;line-height:1;letter-spacing:2px;color:var(--accent)}
+.hd .sub{font-size:.74rem;color:var(--muted);letter-spacing:2px;text-transform:uppercase}
+.note{
+  margin-bottom:16px;
+  padding:14px 16px;
+  border:1.5px solid var(--border);
+  border-radius:16px;
+  background:rgba(255,255,255,.88);
+  font-size:.84rem;
+  line-height:1.8;
+  color:var(--ink2);
+}
+.tabbar{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:14px}
+.tab-btn{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  gap:4px;
+  padding:14px 16px;
+  border:1.5px solid var(--border);
+  border-radius:16px;
+  background:rgba(255,255,255,.88);
+  cursor:pointer;
+  color:var(--ink);
+  font-family:'Noto Sans KR',sans-serif;
+  text-align:left;
+  transition:all .16s ease;
+}
+.tab-btn:hover{border-color:rgba(200,55,26,.25);transform:translateY(-1px)}
+.tab-btn.active{
+  background:linear-gradient(180deg, rgba(200,55,26,.08), rgba(255,255,255,.96));
+  border-color:rgba(200,55,26,.32);
+  box-shadow:0 10px 24px rgba(26,24,20,.06);
+}
+.tab-kicker{font-family:'JetBrains Mono',monospace;font-size:.68rem;color:var(--muted);letter-spacing:1px}
+.tab-title{font-size:.96rem;font-weight:900}
+.tab-desc{font-size:.76rem;line-height:1.7;color:var(--muted)}
+.panel{display:none}
+.panel.active{display:block}
+.frame-shell{
+  border:1.5px solid var(--border);
+  border-radius:18px;
+  background:rgba(255,255,255,.94);
+  box-shadow:0 18px 42px rgba(26,24,20,.06);
+  overflow:hidden;
+}
+.frame-toolbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+  flex-wrap:wrap;
+  padding:12px 14px;
+  border-bottom:1px solid var(--border);
+  background:var(--card);
+}
+.frame-title{font-size:.9rem;font-weight:900}
+.frame-sub{font-size:.76rem;color:var(--muted)}
+iframe{
+  display:block;
+  width:100%;
+  min-height:720px;
+  height:720px;
+  border:0;
+  background:#fff;
+}
+@media (max-width:980px){
+  .tabbar{grid-template-columns:repeat(2,minmax(0,1fr))}
+  iframe{min-height:680px;height:680px}
+}
+@media (max-width:640px){
+  .wrap{padding:22px 14px}
+  .tabbar{grid-template-columns:1fr}
+  iframe{min-height:620px;height:620px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hd">
+    <h1>CONTENT BUILDER</h1>
+    <div class="sub">prep + check builder workspace</div>
+  </div>
+
+  <div class="tabbar">
+    <button class="tab-btn active" type="button" data-panel="prep-set-panel">
+      <span class="tab-kicker">TAB 01</span>
+      <span class="tab-title">PREP SET</span>
+      <span class="tab-desc">Passage and set builder</span>
+    </button>
+    <button class="tab-btn" type="button" data-panel="prep-master-panel">
+      <span class="tab-kicker">TAB 02</span>
+      <span class="tab-title">PREP MASTER BUILDER</span>
+      <span class="tab-desc">Master session builder</span>
+    </button>
+    <button class="tab-btn" type="button" data-panel="check-set-panel">
+      <span class="tab-kicker">TAB 03</span>
+      <span class="tab-title">CHECK SET BUILDER</span>
+      <span class="tab-desc">Check set builder</span>
+    </button>
+    <button class="tab-btn" type="button" data-panel="check-master-panel">
+      <span class="tab-kicker">TAB 04</span>
+      <span class="tab-title">CHECK MASTER BUILDER</span>
+      <span class="tab-desc">Check master builder</span>
+    </button>
+  </div>
+
+  <section class="panel active" id="prep-set-panel">
+    <div class="frame-shell">
+      <div class="frame-toolbar">
+        <div>
+          <div class="frame-title">PREP SET BUILDER</div>
+        </div>
+      </div>
+      <iframe src="./ROTATION_SET_BUILDER.html" title="PREP ROTATION SET"></iframe>
+    </div>
+  </section>
+
+  <section class="panel" id="prep-master-panel">
+    <div class="frame-shell">
+      <div class="frame-toolbar">
+        <div>
+          <div class="frame-title">PREP MASTER BUILDER</div>
+        </div>
+      </div>
+      <iframe src="./PREP_MASTER_BUILDER.html" title="PREP MASTER SESSION"></iframe>
+    </div>
+  </section>
+
+  <section class="panel" id="check-set-panel">
+    <div class="frame-shell">
+      <div class="frame-toolbar">
+        <div>
+          <div class="frame-title">CHECK SET BUILDER</div>
+        </div>
+      </div>
+      <iframe src="./CHECK_SET_BUILDER.html" title="CHECK SET"></iframe>
+    </div>
+  </section>
+
+  <section class="panel" id="check-master-panel">
+    <div class="frame-shell">
+      <div class="frame-toolbar">
+        <div>
+          <div class="frame-title">CHECK MASTER BUILDER</div>
+        </div>
+      </div>
+      <iframe src="./CHECK_MASTER_BUILDER.html" title="CHECK MASTER BUILDER"></iframe>
+    </div>
+  </section>
+</div>
+
+<script>
+document.querySelectorAll('.tab-btn').forEach(button => {
+  button.addEventListener('click', () => {
+    const panelId = button.dataset.panel;
+    document.querySelectorAll('.tab-btn').forEach(node => node.classList.toggle('active', node === button));
+    document.querySelectorAll('.panel').forEach(panel => panel.classList.toggle('active', panel.id === panelId));
+  });
+});
+</script>
+</body>
+</html>

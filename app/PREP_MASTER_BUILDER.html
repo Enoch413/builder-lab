@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PREP MASTER BUILDER</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=JetBrains+Mono:wght@400;700&family=Noto+Sans+KR:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+<script src="./embedded_host_bridge.js"></script>
+<style>
+:root{--bg:#f5f2eb;--surface:#fff;--card:#faf8f3;--border:#e0dbd0;--ink:#1a1814;--ink2:#3d3a34;--muted:#8a8478;--accent:#c8371a;--blue:#1a5fc8;--green:#1a8c4e;--red:#b4341a}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh}
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.04'/%3E%3C/svg%3E");opacity:.35;pointer-events:none}
+.wrap{position:relative;z-index:1;max-width:1080px;margin:0 auto;padding:34px 20px 80px}
+.hd{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:28px;padding-bottom:12px;border-bottom:3px solid var(--ink)}
+.hd h1{font-family:'Bebas Neue',sans-serif;font-size:2.7rem;line-height:1;letter-spacing:2px;color:var(--accent)}
+.hd .sub{font-size:.72rem;color:var(--muted);letter-spacing:2px;text-transform:uppercase}
+.step{margin-bottom:22px;padding:18px;border:1.5px solid var(--border);border-radius:18px;background:var(--surface)}
+.step-num{font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:var(--accent);margin-bottom:6px}
+.step-title{font-size:1rem;font-weight:800;margin-bottom:8px}
+.step-desc{font-size:.82rem;color:var(--muted);line-height:1.7;margin-bottom:12px}
+.row-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.summary-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.summary-card{padding:12px;border:1px solid var(--border);border-radius:14px;background:var(--card)}
+.summary-label{font-size:.68rem;color:var(--muted);letter-spacing:1px;margin-bottom:4px}
+.summary-value{font-family:'JetBrains Mono',monospace;font-size:1rem;font-weight:700}
+.file-zone{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:150px;padding:24px 16px;border:2px dashed var(--border);border-radius:16px;background:var(--card);text-align:center;cursor:pointer}
+.file-zone:hover{border-color:var(--accent)}
+.file-zone.loaded{border-color:var(--green);background:rgba(26,140,78,.06)}
+.file-zone.status-box{cursor:default}
+.file-zone.status-box:hover{border-color:var(--border)}
+.fz-title{font-size:.95rem;font-weight:800}
+.fz-sub{margin-top:6px;font-size:.76rem;color:var(--muted);line-height:1.7}
+.target-toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.target-grid{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.target-chip{display:inline-flex;align-items:center;gap:8px;padding:10px 12px;border:1px solid var(--border);border-radius:999px;background:var(--card);font-size:.82rem;font-weight:700;color:var(--ink2)}
+.target-chip input{margin:0}
+.target-empty{padding:12px 14px;border:1px dashed var(--border);border-radius:12px;background:var(--card);font-size:.8rem;color:var(--muted)}
+input[type=text],input[type=date]{width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:12px;background:#fff;color:var(--ink);outline:none;font-family:'Noto Sans KR',sans-serif;font-size:.92rem}
+input[type=text]:focus,input[type=date]:focus{border-color:var(--blue)}
+.mono-input{font-family:'JetBrains Mono',monospace !important;letter-spacing:2px;text-align:center}
+.field-label{margin-bottom:8px;font-size:.74rem;font-weight:800;color:var(--muted);letter-spacing:1px}
+.btn{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:10px 16px;border:none;border-radius:14px;cursor:pointer;font-family:'Noto Sans KR',sans-serif;font-size:.88rem;font-weight:800}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn-red{background:var(--accent);color:#fff}
+.btn-blue{background:var(--blue);color:#fff}
+.btn-ghost{background:transparent;border:1.5px solid var(--border);color:var(--ink2)}
+.btn-sm{min-height:36px;padding:7px 12px;font-size:.76rem}
+.toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.hint{font-size:.8rem;color:var(--muted);line-height:1.7}
+.editor-list{display:grid;gap:14px}
+.editor-card{border:1px solid var(--border);border-radius:16px;background:var(--card);padding:14px}
+.editor-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:12px}
+.editor-index{font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:var(--blue)}
+.editor-meta{margin-top:4px;font-size:.76rem;color:var(--muted)}
+.assign-list{display:grid;gap:12px}
+.assign-card{padding:12px;border:1px solid var(--border);border-radius:14px;background:#fff}
+.assign-head{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+.assign-name{font-size:.86rem;font-weight:800}
+.assign-meta{font-size:.74rem;color:var(--muted)}
+.passage-grid{display:grid;gap:8px}
+.passage-option{display:flex;gap:10px;align-items:flex-start;padding:10px;border:1px solid var(--border);border-radius:12px;background:var(--surface)}
+.passage-option input{margin-top:4px}
+.passage-title{font-size:.86rem;font-weight:800;line-height:1.5}
+.passage-preview{margin-top:4px;font-size:.74rem;color:var(--muted);line-height:1.7}
+.empty-box{padding:18px;text-align:center;color:var(--muted);font-size:.84rem;line-height:1.7;border:1px dashed var(--border);border-radius:14px;background:var(--card)}
+.result{display:none;margin-top:16px;padding:14px 16px;border-radius:14px;background:rgba(26,140,78,.08);border:1.5px solid rgba(26,140,78,.2)}
+.result.show{display:block}
+.result-title{font-size:.9rem;font-weight:900;color:var(--green);margin-bottom:6px}
+.result-sub{font-size:.8rem;color:var(--ink2);line-height:1.7}
+@media(max-width:820px){.summary-grid{grid-template-columns:repeat(2,1fr)}.row-2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hd">
+    <h1>PREP MASTER BUILDER</h1>
+    <div class="sub">session.json builder</div>
+  </div>
+
+  <section class="step">
+    <div class="step-num">01</div>
+    <div class="step-title">JSON 불러오기</div>
+    <div class="step-desc">master session.json은 복원용이고, ROTATION 세션 JSON은 추가용입니다. ROTATION 세션을 추가할 때는 아래에서 기본 배정할 반을 먼저 체크해 주세요.</div>
+    <div class="toolbar">
+      <button class="btn btn-ghost" id="load-master-btn" type="button">master session 불러오기</button>
+      <button class="btn btn-blue" id="add-rotation-btn" type="button">ROTATION 세션 추가</button>
+    </div>
+    <div class="field-label">다음 ROTATION 세션 기본 배정 반</div>
+    <div class="target-toolbar">
+      <button class="btn btn-ghost btn-sm" id="target-all-btn" type="button">전체 선택</button>
+      <button class="btn btn-ghost btn-sm" id="target-clear-btn" type="button">전체 해제</button>
+    </div>
+    <div class="target-grid" id="import-class-targets"></div>
+    <div class="file-zone status-box" id="file-zone">
+      <div class="fz-title" id="fz-title">아직 불러온 파일이 없습니다.</div>
+      <div class="fz-sub" id="fz-sub">master는 현재 설정 복원, ROTATION 세션은 새 학습 세트 추가에 사용됩니다.</div>
+    </div>
+    <input type="file" id="master-input" accept=".json,application/json" hidden>
+    <input type="file" id="rotation-input" accept=".json,application/json" hidden>
+    <div class="summary-grid" id="summary-grid" style="margin-top:14px"></div>
+  </section>
+
+  <section class="step">
+    <div class="step-num">02</div>
+    <div class="step-title">PREP 기본 설정</div>
+    <div class="step-desc">페이지 제목과 공통 비밀번호를 설정합니다. 공통 비밀번호를 비워 두면 반 비밀번호만 사용합니다.</div>
+    <div class="row-2">
+      <div>
+        <div class="field-label">페이지 제목</div>
+        <input type="text" id="page-title" placeholder="예: 고2 영어1 PREP">
+      </div>
+      <div>
+        <div class="field-label">공통 비밀번호(선택)</div>
+        <input type="text" id="global-password" class="mono-input" placeholder="예: 1234">
+      </div>
+    </div>
+  </section>
+
+  <section class="step">
+    <div class="step-num">03</div>
+    <div class="step-title">반 설정</div>
+    <div class="step-desc">반은 최대 8개까지 만들 수 있고, 모든 학습 세트에서 공통으로 사용합니다.</div>
+    <div class="toolbar">
+      <div class="hint">반 이름과 반 비밀번호를 먼저 정한 뒤, 아래 학습 세트마다 어떤 지문을 보여줄지 체크해 주세요.</div>
+      <button class="btn btn-blue btn-sm" type="button" id="add-class-btn">+ 반 추가</button>
+    </div>
+    <div class="editor-list" id="class-editor"></div>
+  </section>
+
+  <section class="step">
+    <div class="step-num">04</div>
+    <div class="step-title">학습 세트 설정</div>
+    <div class="step-desc">학습 세트마다 제목과 기간을 정하고, 각 반에 보여줄 지문을 따로 체크합니다. 기간이 지나면 학생 화면에서는 종료 상태로 보입니다.</div>
+    <div class="editor-list" id="set-editor"></div>
+  </section>
+
+  <section class="step">
+    <div class="step-num">05</div>
+    <div class="step-title">master session.json 생성</div>
+    <div class="step-desc">고정 PREP 웹페이지는 그대로 두고, 이 session.json 하나만 웹에 올리면 여러 반과 여러 기간을 함께 운영할 수 있습니다.</div>
+    <button class="btn btn-red" id="generate-btn" type="button" disabled>master session.json 다운로드</button>
+    <div class="result" id="result">
+      <div class="result-title">완료</div>
+      <div class="result-sub" id="result-sub"></div>
+    </div>
+  </section>
+</div>
+
+<script src="./prep_builder_app.js"></script>
+</body>
+</html>

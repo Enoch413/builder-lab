@@ -1,0 +1,3560 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PREP SET BUILDER</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Sans+KR:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script src="./embedded_host_bridge.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f5f2eb;--surface:#fff;--card:#faf8f3;--border:#e0dbd0;
+  --ink:#1a1814;--ink-light:#3d3a34;--muted:#8a8478;
+  --accent:#c8371a;--accent2:#1a5fc8;--green:#1a8c4e;--yellow:#e8a820;
+  --purple:#7c3aed;
+}
+body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;}
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;z-index:0;opacity:.4;}
+
+/* ── SETUP ── */
+#setup{position:relative;z-index:1;max-width:1280px;margin:0 auto;padding:40px 24px 80px;}
+.masthead{margin-bottom:36px;border-bottom:3px solid var(--ink);padding-bottom:14px;display:flex;align-items:baseline;gap:16px;}
+.masthead h1{font-family:'Bebas Neue',sans-serif;font-size:3.6rem;letter-spacing:2px;color:var(--accent);line-height:1;}
+.masthead .sub{font-size:0.76rem;color:var(--muted);letter-spacing:3px;text-transform:uppercase;}
+
+.setup-cols{display:flex;flex-direction:column;gap:22px;}
+.setup-panel,.question-config-panel{background:var(--surface);border:1.5px solid var(--border);border-radius:14px;padding:20px 22px;position:relative;}
+.setup-panel{overflow:hidden;}
+@media(max-width:680px){
+  #setup{padding:28px 14px 56px;}
+  .setup-panel,.question-config-panel{padding:16px 16px 18px;}
+}
+.section-label{font-family:'Bebas Neue',sans-serif;font-size:1.05rem;letter-spacing:2px;color:var(--muted);margin-bottom:10px;border-left:3px solid var(--accent);padding-left:10px;}
+label.fl{display:block;font-size:0.7rem;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;margin-top:12px;}
+input[type=text],textarea,input[type=number]{width:100%;background:var(--surface);border:1.5px solid var(--border);border-radius:8px;color:var(--ink);font-family:'Noto Sans KR',sans-serif;font-size:0.88rem;padding:9px 12px;outline:none;transition:border-color .2s;resize:vertical;}
+input[type=text]:focus,textarea:focus,input[type=number]:focus{border-color:var(--accent2);}
+textarea{min-height:100px;}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:8px;font-family:'Noto Sans KR',sans-serif;font-size:0.85rem;font-weight:700;cursor:pointer;border:none;transition:all .18s;white-space:nowrap;word-break:keep-all;flex-shrink:0;}
+.btn-ghost{background:transparent;border:1.5px solid var(--border);color:var(--ink-light);}
+.btn-ghost:hover{border-color:var(--ink);}
+.btn-red{background:var(--accent);color:#fff;}
+.btn-red:hover{background:#a82c14;transform:translateY(-1px);}
+.btn-sm{padding:5px 12px;font-size:0.76rem;}
+.chip-wrap{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;min-height:32px;}
+.chip{background:var(--card);border:1.5px solid var(--border);border-radius:999px;padding:3px 12px;font-size:0.78rem;display:flex;align-items:center;gap:6px;}
+.chip-x{background:none;border:none;color:var(--muted);cursor:pointer;font-size:1rem;line-height:1;}
+.chip-x:hover{color:var(--accent);}
+
+/* 지문 카드 */
+.p-stack{margin-top:10px;min-height:0;}
+.passage-workspace{display:grid;grid-template-columns:240px minmax(0,1fr);gap:14px;align-items:start;}
+.passage-tab-list{background:var(--surface);border:1.5px solid var(--border);border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:8px;overflow:auto;max-height:min(72vh,920px);}
+.passage-tab-list::-webkit-scrollbar{width:8px;}
+.passage-tab-list::-webkit-scrollbar-thumb{background:rgba(138,132,120,.22);border-radius:999px;}
+.passage-tab{background:var(--card);border:1.5px solid var(--border);border-radius:10px;padding:10px 12px;text-align:left;cursor:pointer;transition:all .16s;color:var(--ink);font-family:'Noto Sans KR',sans-serif;}
+.passage-tab:hover{border-color:rgba(26,95,200,.28);background:#fcfbf7;}
+.passage-tab.active{background:rgba(26,95,200,.08);border-color:rgba(26,95,200,.4);box-shadow:inset 0 0 0 1px rgba(26,95,200,.06);}
+.passage-tab-num{display:block;color:var(--accent);margin-bottom:4px;}
+.passage-tab-num.auto{font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:1px;}
+.passage-tab-num.named{font-family:'Noto Sans KR',sans-serif;font-size:0.92rem;font-weight:800;letter-spacing:0;line-height:1.5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.passage-tab-title{display:block;font-size:0.82rem;color:var(--ink);line-height:1.5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.passage-tab-meta{display:block;font-size:0.72rem;color:var(--muted);margin-top:6px;}
+.passage-editor-shell{background:var(--surface);border:1.5px solid var(--border);border-radius:12px;display:flex;flex-direction:column;min-height:560px;max-height:min(72vh,920px);overflow:hidden;}
+.passage-editor-head{padding:16px 18px;border-bottom:1.5px solid var(--border);background:linear-gradient(180deg,#fcfbf7, #faf8f3);display:flex;align-items:flex-start;justify-content:space-between;gap:14px;}
+.passage-editor-title{font-family:'Bebas Neue',sans-serif;font-size:1.6rem;letter-spacing:1.5px;color:var(--accent);}
+.passage-editor-meta{font-size:0.78rem;color:var(--muted);line-height:1.7;margin-top:4px;}
+.passage-editor-body{padding:16px 18px 18px;display:flex;flex-direction:column;gap:14px;flex:1 1 auto;min-height:0;overflow:auto;scrollbar-gutter:stable;}
+.passage-editor-body::-webkit-scrollbar{width:8px;}
+.passage-editor-body::-webkit-scrollbar-thumb{background:rgba(138,132,120,.24);border-radius:999px;}
+.passage-source-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;}
+.passage-source-card{background:var(--card);border:1.5px solid var(--border);border-radius:12px;padding:12px;}
+.passage-source-input{min-height:220px;}
+.passage-empty{background:var(--surface);border:1.5px dashed var(--border);border-radius:12px;padding:24px;color:var(--muted);font-size:0.86rem;line-height:1.7;}
+@media(max-width:920px){
+  .passage-workspace{grid-template-columns:1fr;}
+  .passage-tab-list{max-height:220px;}
+  .passage-editor-shell{min-height:0;max-height:none;}
+  .passage-source-grid{grid-template-columns:1fr;}
+}
+.p-card{background:var(--surface);border:1.5px solid var(--border);border-radius:10px;overflow:hidden;display:flex;flex-direction:column;flex-shrink:0;}
+.p-card.open{box-shadow:0 10px 24px rgba(26,24,20,.06);}
+.p-card.collapsed .p-card-body{display:none;}
+.p-card-header{background:var(--card);border-bottom:1.5px solid var(--border);padding:10px 14px;display:flex;align-items:center;gap:10px;cursor:pointer;}
+.p-card-num{font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:var(--accent);}
+.p-card-preview{flex:1;font-size:0.78rem;color:var(--muted);overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
+.p-card-toggle{font-size:0.7rem;font-weight:800;letter-spacing:1px;color:var(--accent2);background:rgba(26,95,200,.08);border:1px solid rgba(26,95,200,.18);border-radius:999px;padding:4px 10px;flex-shrink:0;}
+.p-card-del{background:none;border:none;color:var(--muted);cursor:pointer;font-size:1rem;}
+.p-card-del:hover{color:var(--accent);}
+.p-card-body{padding:12px 14px;display:flex;flex-direction:column;gap:10px;min-height:0;}
+.p-card.open .p-card-body{max-height:min(68vh,820px);overflow:auto;overscroll-behavior:contain;scrollbar-gutter:stable;}
+.p-card.open .p-card-body::-webkit-scrollbar{width:8px;}
+.p-card.open .p-card-body::-webkit-scrollbar-thumb{background:rgba(138,132,120,.24);border-radius:999px;}
+
+/* 문장 선택 영역 */
+.sentence-select-area{background:var(--card);border:1.5px solid var(--border);border-radius:8px;padding:12px;font-size:0.85rem;line-height:1.9;cursor:default;}
+.sentence-select-area .sent{cursor:pointer;border-radius:4px;padding:1px 3px;transition:background .15s;}
+.sentence-select-area .sent:hover{background:rgba(200,55,26,.08);}
+.sentence-select-area .sent.selected{background:rgba(200,55,26,.15);border-bottom:2px solid var(--accent);color:var(--accent);font-weight:600;}
+.selected-count{font-size:0.72rem;color:var(--muted);margin-top:4px;}
+.mini-label{font-size:0.7rem;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:5px;}
+.selected-answer-list{display:flex;flex-direction:column;gap:8px;margin-top:10px;}
+.selected-answer-item{background:var(--card);border:1.5px solid var(--border);border-radius:10px;padding:12px;}
+.selected-answer-title{font-size:0.78rem;font-weight:700;line-height:1.6;margin-bottom:8px;color:var(--ink);}
+.question-answer-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.question-answer-item{background:var(--card);border:1.5px solid var(--border);border-radius:10px;padding:12px;}
+.question-answer-item textarea{min-height:82px;margin-top:8px;}
+.empty-note{font-size:0.78rem;color:var(--muted);line-height:1.7;}
+.grammar-list{display:flex;flex-direction:column;gap:8px;}
+.grammar-row{display:grid;grid-template-columns:minmax(180px,1fr) minmax(260px,1.4fr) auto;gap:8px;align-items:start;}
+.grammar-row textarea{min-height:76px;}
+.line-pick-list{display:flex;flex-direction:column;gap:8px;margin-top:10px;}
+.line-pick-item{background:var(--card);border:1.5px solid var(--border);border-radius:10px;padding:10px 12px;cursor:pointer;transition:all .16s;}
+.line-pick-item:hover{border-color:rgba(200,55,26,.35);background:#fff7f3;}
+.line-pick-item.selected{border-color:rgba(200,55,26,.45);background:rgba(200,55,26,.08);}
+.line-pick-item strong{display:block;font-size:0.76rem;color:var(--accent);margin-bottom:5px;}
+.line-pick-item .line-text{font-size:0.86rem;line-height:1.7;color:var(--ink);}
+.line-pick-item .line-translation{font-size:0.8rem;line-height:1.7;color:var(--muted);margin-top:6px;padding-top:6px;border-top:1px dashed rgba(138,132,120,.35);}
+.grammar-toolbar{
+  display:flex;
+  gap:8px;
+  align-items:center;
+  flex-wrap:wrap;
+  margin-bottom:8px;
+  position:sticky;
+  top:-8px;
+  z-index:4;
+  padding:8px 10px 10px;
+  margin-left:-10px;
+  margin-right:-10px;
+  background:linear-gradient(180deg,rgba(250,248,243,.98) 0%, rgba(250,248,243,.96) 78%, rgba(250,248,243,0) 100%);
+  backdrop-filter:blur(4px);
+}
+.status-inline{font-size:0.76rem;color:var(--muted);}
+.grammar-select-shell{display:flex;flex-direction:column;gap:0;}
+.grammar-select-area{background:var(--card);border:1.5px solid var(--border);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:8px;}
+.grammar-select-line{padding:8px 10px;border-radius:8px;line-height:1.8;user-select:text;-webkit-user-select:text;}
+.grammar-select-line:hover{background:rgba(26,95,200,.05);}
+.grammar-context{font-size:0.75rem;color:var(--muted);margin-top:4px;line-height:1.6;}
+.grammar-highlight{display:inline;padding:0 .2em;border-radius:6px;background:rgba(200,55,26,.12);color:var(--accent);box-shadow:0 0 0 1px rgba(200,55,26,.15) inset;}
+
+/* 동의어/반의어 표 */
+.vocab-table{width:100%;border-collapse:collapse;font-size:0.82rem;}
+.vocab-table th{background:var(--card);border:1.5px solid var(--border);padding:6px 10px;text-align:left;font-size:0.7rem;letter-spacing:1px;text-transform:uppercase;color:var(--muted);}
+.vocab-table td{border:1.5px solid var(--border);padding:0;}
+.vocab-table td input{border:none;border-radius:0;background:transparent;padding:7px 10px;font-size:0.82rem;}
+.vocab-table td.vocab-action-cell{padding:6px;width:88px;background:rgba(26,95,200,.03);}
+.vocab-table td.vocab-action-cell .btn{width:100%;justify-content:center;white-space:nowrap;}
+.vocab-table td input:focus{background:rgba(26,95,200,.04);}
+.vocab-table tr:last-child td{border-bottom:1.5px solid var(--border);}
+.vocab-add-row{display:flex;gap:6px;margin-top:6px;}
+.point-textarea{min-height:84px;font-size:0.8rem;line-height:1.6;}
+
+.question-config-panel{margin-top:0;}
+.question-config-desc{font-size:0.78rem;color:var(--muted);line-height:1.7;margin-bottom:14px;}
+.question-config-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;}
+.question-config-item{background:var(--card);border:1.5px solid var(--border);border-radius:10px;padding:12px 12px 10px;}
+.question-config-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:8px;}
+.question-config-name{font-size:0.84rem;font-weight:800;color:var(--ink);}
+.question-config-hint{font-size:0.68rem;color:var(--muted);line-height:1.5;}
+.question-config-item input{margin-top:6px;text-align:center;font-family:'JetBrains Mono',monospace;font-weight:700;}
+.question-config-summary{margin-top:14px;font-size:0.76rem;color:var(--ink-light);}
+.question-config-summary b{color:var(--accent);}
+.config-stack{display:flex;flex-direction:column;gap:14px;}
+.config-block{background:var(--card);border:1.5px solid var(--border);border-radius:12px;padding:14px 16px;}
+.config-toggle-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;}
+.config-toggle{display:inline-flex;align-items:center;gap:8px;padding:9px 14px;border-radius:999px;border:1.5px solid var(--border);background:#fff;color:var(--muted);font-size:0.82rem;font-weight:700;cursor:pointer;}
+.config-toggle.active{border-color:rgba(200,55,26,.35);background:rgba(200,55,26,.08);color:var(--accent);}
+.config-toggle input{margin:0;accent-color:var(--accent);}
+.config-mini-form{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px;}
+.config-mini-input{width:96px;text-align:center;font-family:'JetBrains Mono',monospace;font-weight:700;}
+.config-meta-note{margin-top:8px;font-size:0.74rem;color:var(--muted);line-height:1.7;}
+.question-count-badge{display:inline-flex;align-items:center;justify-content:center;min-width:34px;padding:6px 10px;border-radius:999px;background:rgba(200,55,26,.08);border:1.5px solid rgba(200,55,26,.22);font-family:'JetBrains Mono',monospace;font-weight:800;color:var(--accent);}
+
+.start-bar{margin-top:24px;display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;}
+.start-bar>div{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+
+/* ── 배정 화면 ── */
+#assign-screen{display:none;position:relative;z-index:1;max-width:900px;margin:0 auto;padding:48px 24px 80px;}
+.assign-title{font-family:'Bebas Neue',sans-serif;font-size:2.4rem;letter-spacing:2px;color:var(--accent);margin-bottom:6px;}
+.assign-sub{font-size:0.82rem;color:var(--muted);margin-bottom:16px;}
+.assign-summary{background:var(--surface);border:1.5px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:18px;}
+.assign-summary-title{font-size:0.84rem;font-weight:800;color:var(--ink);line-height:1.6;}
+.assign-summary-sub{margin-top:4px;font-size:0.75rem;color:var(--muted);line-height:1.7;}
+.assign-summary-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;}
+.assign-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;margin-bottom:32px;}
+.assign-card{background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:16px 14px;}
+.ac-name{font-size:1rem;font-weight:900;margin-bottom:8px;display:flex;align-items:center;gap:7px;}
+.ac-avatar{width:28px;height:28px;background:var(--accent);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:0.9rem;color:#fff;flex-shrink:0;}
+.ac-tags{display:flex;flex-wrap:wrap;gap:4px;}
+.ac-tag{font-family:'JetBrains Mono',monospace;font-size:0.72rem;background:rgba(200,55,26,.08);border:1.5px solid rgba(200,55,26,.22);color:var(--accent);border-radius:5px;padding:2px 8px;font-weight:700;}
+.assign-empty{font-size:0.74rem;color:var(--muted);line-height:1.6;padding:8px 0 2px;}
+.assign-select-wrap{margin-top:12px;padding-top:12px;border-top:1px dashed rgba(138,132,120,.28);}
+.assign-select-label{font-size:0.7rem;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;}
+.assign-select{width:100%;font-family:'Noto Sans KR',sans-serif;font-size:0.84rem;}
+.assign-checklist{display:flex;flex-direction:column;gap:8px;max-height:220px;overflow:auto;padding-right:4px;}
+.assign-check-item{display:flex;align-items:center;gap:8px;padding:9px 11px;border-radius:10px;border:1px solid var(--border);background:#fff;font-size:0.8rem;color:var(--ink);}
+.assign-check-item.active{border-color:rgba(200,55,26,.26);background:rgba(200,55,26,.06);}
+.assign-check-item input{margin:0;accent-color:var(--accent);}
+.assign-check-item.disabled{opacity:.58;}
+.assign-config-meta{font-size:0.74rem;color:var(--muted);line-height:1.6;margin-top:8px;}
+.assign-actions{display:flex;gap:10px;justify-content:flex-end;}
+
+/* ── 수업 화면 ── */
+#class-screen{display:none;position:relative;z-index:1;min-height:100vh;flex-direction:column;}
+.topbar{background:var(--ink);color:#f5f2eb;padding:11px 24px;display:flex;align-items:center;justify-content:space-between;border-bottom:3px solid var(--accent);}
+.topbar-logo{font-family:'Bebas Neue',sans-serif;font-size:1.5rem;letter-spacing:2px;color:var(--accent);}
+.topbar-info{display:flex;align-items:center;gap:16px;}
+.tstat{font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:#a09a8e;}
+.tstat span{color:#f5f2eb;font-weight:700;}
+.class-body{flex:1;display:grid;grid-template-columns:230px 1fr;}
+@media(max-width:700px){.class-body{grid-template-columns:1fr}.sidebar{display:none}}
+.sidebar{background:var(--surface);border-right:1.5px solid var(--border);padding:18px 14px;overflow-y:auto;display:flex;flex-direction:column;gap:20px;}
+.sb-title{font-family:'Bebas Neue',sans-serif;font-size:0.85rem;letter-spacing:2px;color:var(--muted);margin-bottom:8px;}
+.al-row{padding:7px 9px;border-radius:7px;border:1.5px solid transparent;font-size:0.8rem;margin-bottom:4px;transition:all .2s;}
+.al-row.al-active{background:rgba(200,55,26,.08);border-color:rgba(200,55,26,.3);}
+.al-name{font-weight:700;color:var(--ink);margin-bottom:3px;}
+.al-tags{display:flex;flex-wrap:wrap;gap:3px;}
+.al-tag{font-family:'JetBrains Mono',monospace;font-size:0.65rem;background:var(--card);border:1px solid var(--border);border-radius:3px;padding:1px 5px;color:var(--muted);}
+.al-tag.done{background:rgba(26,140,78,.1);border-color:rgba(26,140,78,.3);color:var(--green);text-decoration:line-through;}
+.al-tag.current{background:rgba(200,55,26,.1);border-color:rgba(200,55,26,.35);color:var(--accent);font-weight:700;}
+.qt-row{padding:5px 9px;border-radius:5px;font-size:0.76rem;border:1.5px solid transparent;margin-bottom:2px;transition:all .2s;}
+.qt-row.qt-done{color:var(--muted);text-decoration:line-through;opacity:.45;}
+.qt-row.qt-active{background:rgba(26,95,200,.1);border-color:rgba(26,95,200,.3);color:var(--accent2);font-weight:700;}
+.qt-row.qt-wait{color:var(--muted);opacity:.5;}
+
+.main{padding:24px 32px;display:flex;flex-direction:column;gap:18px;overflow-y:auto;}
+.overall-prog{background:var(--card);border:1.5px solid var(--border);border-radius:10px;padding:11px 15px;}
+.op-bar-wrap{background:var(--border);border-radius:999px;height:5px;overflow:hidden;margin:5px 0;}
+.op-bar{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:999px;transition:width .4s ease;}
+.op-text{font-family:'JetBrains Mono',monospace;font-size:0.7rem;color:var(--muted);text-align:right;}
+.prog-header{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.badge{display:inline-flex;align-items:center;padding:5px 14px;border-radius:999px;font-size:0.75rem;font-weight:700;letter-spacing:1px;border:1.5px solid;}
+.badge-red{background:rgba(200,55,26,.1);border-color:rgba(200,55,26,.35);color:var(--accent);}
+.badge-gray{background:var(--card);border-color:var(--border);color:var(--muted);}
+.badge-blue{background:rgba(26,95,200,.1);border-color:rgba(26,95,200,.4);color:var(--accent2);}
+.badge-yellow{background:rgba(232,168,32,.12);border-color:rgba(232,168,32,.4);color:var(--yellow);}
+
+.stu-banner{background:var(--surface);border:1.5px solid var(--border);border-left:5px solid var(--accent);border-radius:12px;padding:16px 20px;display:flex;align-items:center;gap:14px;}
+.avatar{width:46px;height:46px;background:var(--accent);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:#fff;flex-shrink:0;}
+.avatar.sub-stu{background:var(--yellow);}
+.stu-name{font-size:1.35rem;font-weight:900;}
+.stu-meta{font-size:0.75rem;color:var(--muted);margin-top:2px;}
+.sub-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(232,168,32,.15);border:1.5px solid rgba(232,168,32,.5);color:var(--yellow);border-radius:999px;padding:3px 11px;font-size:0.7rem;font-weight:700;margin-left:8px;}
+
+.passage-card{background:var(--surface);border:1.5px solid var(--border);border-radius:12px;padding:20px 24px;}
+.card-label{font-size:0.65rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
+.passage-text{font-size:0.95rem;line-height:1.9;color:var(--ink);white-space:pre-wrap;}
+
+.question-card{background:var(--ink);border-radius:12px;padding:20px 24px;position:relative;overflow:hidden;}
+.question-card::after{content:'?';position:absolute;right:14px;top:50%;transform:translateY(-50%);font-family:'Bebas Neue',sans-serif;font-size:7rem;color:rgba(255,255,255,.04);line-height:1;}
+.q-label{font-size:0.65rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:rgba(245,242,235,.52);margin-bottom:8px;}
+.q-text{font-size:1rem;font-weight:700;line-height:1.65;color:#f5f2eb;}
+.q-text .grammar-highlight{display:inline;padding:0 .2em;border-radius:6px;background:rgba(255,202,120,.2);color:#ffdca0;box-shadow:0 0 0 1px rgba(255,220,160,.18) inset;}
+.inline-answer{display:none;margin-top:16px;padding-top:14px;border-top:1px solid rgba(255,255,255,.1);}
+.inline-answer.show{display:block;}
+.inline-answer-label{font-size:0.68rem;font-weight:700;letter-spacing:1.6px;text-transform:uppercase;color:rgba(245,242,235,.62);margin-bottom:10px;}
+.inline-answer-content{display:flex;flex-direction:column;gap:8px;max-height:240px;overflow:auto;padding-right:4px;}
+.inline-answer-content .selected-answer-item{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.12);color:#f5f2eb;padding:10px 12px;}
+.inline-answer-content .selected-answer-title{color:#f5f2eb;margin-bottom:6px;}
+.inline-answer-content .mini-label{color:rgba(245,242,235,.58);}
+.inline-answer-content .empty-note{color:rgba(245,242,235,.72);}
+.inline-answer-content .grammar-context{color:rgba(245,242,235,.62);}
+.inline-answer-content .grammar-highlight{display:inline;padding:0 .2em;border-radius:6px;background:rgba(255,202,120,.2);color:#ffdca0;box-shadow:0 0 0 1px rgba(255,220,160,.18) inset;}
+.inline-answer-content::-webkit-scrollbar{width:8px;}
+.inline-answer-content::-webkit-scrollbar-thumb{background:rgba(245,242,235,.18);border-radius:999px;}
+
+/* 동의어/반의어 퀴즈 카드 */
+.vocab-quiz-card{background:var(--ink);border-radius:12px;padding:20px 24px;}
+.vocab-quiz-word{font-family:'Bebas Neue',sans-serif;font-size:2.2rem;color:var(--accent);letter-spacing:1px;margin-bottom:4px;}
+.vocab-quiz-prompt{font-size:0.88rem;color:#f5f2eb;font-weight:700;line-height:1.6;margin-bottom:8px;}
+.vocab-quiz-hint{font-size:0.8rem;color:rgba(245,242,235,.62);font-weight:600;margin-bottom:12px;}
+.vocab-quiz-answer{display:none;margin-top:14px;border-top:1px solid rgba(255,255,255,.08);padding-top:14px;}
+.vocab-quiz-answer.show{display:block;}
+.vocab-answer-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
+.va-tag{display:inline-flex;align-items:center;gap:4px;padding:4px 12px;border-radius:6px;font-size:0.82rem;font-weight:700;}
+.va-syn{background:rgba(26,140,78,.2);color:#4ecb8d;}
+.va-ant{background:rgba(200,55,26,.2);color:#ff7a5c;}
+
+.action-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+.btn-correct{background:var(--green);color:#fff;padding:13px 28px;font-size:0.92rem;border-radius:10px;}
+.btn-correct:hover{background:#157040;transform:translateY(-1px);}
+.btn-wrong{background:var(--accent);color:#fff;padding:13px 28px;font-size:0.92rem;border-radius:10px;}
+.btn-wrong:hover{background:#a82c14;transform:translateY(-1px);}
+.btn-show-answer{background:rgba(255,255,255,.08);color:#f5f2eb;border:1.5px solid rgba(255,255,255,.15);padding:10px 20px;font-size:0.85rem;border-radius:10px;}
+.btn-show-answer:hover{background:rgba(255,255,255,.14);}
+.btn-skip{background:transparent;border:1.5px solid var(--border);color:var(--muted);padding:13px 16px;font-size:0.85rem;border-radius:10px;}
+.btn-skip:hover{border-color:var(--muted);}
+
+/* 대타 학생 배너 */
+.sub-banner{background:rgba(232,168,32,.08);border:1.5px solid rgba(232,168,32,.35);border-radius:10px;padding:12px 16px;font-size:0.82rem;color:var(--yellow);display:none;}
+.sub-banner.show{display:block;}
+
+.done-overlay{display:none;position:fixed;inset:0;background:rgba(245,242,235,.95);backdrop-filter:blur(6px);align-items:center;justify-content:center;z-index:200;flex-direction:column;gap:14px;text-align:center;}
+.done-overlay.show{display:flex;}
+.done-big{font-family:'Bebas Neue',sans-serif;font-size:5rem;color:var(--accent);letter-spacing:3px;line-height:1;}
+.done-sub{color:var(--muted);font-size:0.9rem;}
+
+.fade-in{animation:fi .28s ease;}
+@keyframes fi{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+
+<!-- ══ SETUP ══ -->
+<div id="setup">
+  <div class="masthead"><h1>PREP SET BUILDER</h1></div>
+  <div class="setup-cols">
+    <!-- 학생 -->
+    <div class="setup-panel">
+      <div class="section-label">① 학생 명단</div>
+      <label class="fl">이름 입력 후 Enter</label>
+      <div style="display:flex;gap:8px;"><input type="text" id="stu-input" placeholder="학생 이름"/><button class="btn btn-ghost btn-sm" onclick="addStudent()">추가</button></div>
+      <div class="chip-wrap" id="stu-chips"></div>
+      <label class="fl" style="margin-top:14px;">또는 일괄 입력 (줄 구분)</label>
+      <textarea id="bulk-stu" placeholder="홍길동&#10;이순신&#10;김철수" style="min-height:72px;"></textarea>
+      <button class="btn btn-ghost btn-sm" style="margin-top:6px;" onclick="bulkAdd()">일괄 추가</button>
+    </div>
+    <!-- 지문 -->
+    <div class="setup-panel">
+      <div class="section-label">② 시험범위 지문</div>
+      <label class="fl">지문 원문 붙여넣기</label>
+      <textarea id="p-input" placeholder="문장마다 줄바꿈해서 넣어 주세요."></textarea>
+      <label class="fl">전체 해석 붙여넣기</label>
+      <textarea id="p-translation-input" placeholder="해석도 원문과 같은 줄 순서로 넣어 주세요." style="min-height:88px;"></textarea>
+      <div class="empty-note" style="margin-top:6px;">원문 한 줄 = 해석 한 줄 기준으로 저장됩니다.</div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:6px;">
+        <button class="btn btn-ghost btn-sm" onclick="addPassage()">+ 지문 추가</button>
+        <label class="btn btn-ghost btn-sm" style="cursor:pointer;margin:0;" title="분석본 md 파일에서 주제, 서술형 문장, 어휘 포인트를 자동으로 가져옵니다">
+          + 분석본 md 추가
+          <input type="file" accept=".md,.markdown,text/markdown,text/plain" multiple onchange="importMarkdownFiles(event)" style="display:none;">
+        </label>
+      </div>
+      <div class="empty-note" style="margin-top:6px;">분석본 md를 넣으면 현재 편집 중인 지문이나 기존 지문과 문장·제목이 맞는 항목은 자동 매칭됩니다. 지문 이름은 지문을 추가한 뒤 각 지문 탭 맨 위에서 바꿀 수 있습니다.</div>
+      <div class="p-stack" id="p-stack"></div>
+    </div>
+  </div>
+  <div class="question-config-panel">
+    <div class="section-label">③ 출제 / 배정 구성</div>
+    <div class="question-config-desc">이번 ROTATION 수업에서 사용할 출제 구성과 학생당 지문 배정 방식을 여기서 한 번에 정합니다.</div>
+    <div id="question-config"></div>
+  </div>
+  <div class="start-bar">
+    <span style="font-size:0.76rem;color:var(--muted);">학생 <b id="stu-count">0</b>명 · 지문 <b id="p-count">0</b>개</span>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <button class="btn btn-ghost btn-sm" onclick="saveSession()" title="현재 학생 명단과 지문을 JSON 파일로 저장합니다">💾 세션 저장</button>
+      <label class="btn btn-ghost btn-sm" style="cursor:pointer;margin:0;" title="저장했던 JSON 파일을 불러옵니다">
+        📂 세션 불러오기
+        <input type="file" accept=".json" onchange="loadSession(event)" style="display:none;">
+      </label>
+      <button class="btn btn-red" style="padding:13px 40px;font-size:0.95rem;border-radius:10px;" onclick="doAssign()">▶ 배정 확인</button>
+    </div>
+  </div>
+  <!-- 토스트 알림 -->
+  <div id="toast" style="
+    position:fixed;bottom:32px;left:50%;transform:translateX(-50%) translateY(20px);
+    background:var(--ink);color:#f5f2eb;
+    padding:10px 22px;border-radius:10px;font-size:0.83rem;
+    opacity:0;transition:all .3s;z-index:9999;pointer-events:none;
+    border-left:4px solid var(--accent);white-space:nowrap;
+  "></div>
+</div>
+
+<!-- ══ 배정 확인 ══ -->
+<div id="assign-screen">
+  <div class="assign-title">지문 배정 결과</div>
+  <div class="assign-sub">학생별 담당 지문을 확인하고, 필요하면 직접 바꾼 뒤 바로 수업을 시작하세요.</div>
+  <div class="assign-summary" id="assign-summary"></div>
+  <div class="assign-grid" id="assign-grid"></div>
+  <div class="assign-actions">
+    <button class="btn btn-ghost" onclick="goBack()">← 뒤로</button>
+    <button class="btn btn-ghost" onclick="doAssign()">🔀 랜덤 다시 배정</button>
+    <button class="btn btn-red" style="padding:13px 32px;" onclick="startClass()">▶ 수업 시작</button>
+  </div>
+</div>
+
+<!-- ══ 수업 화면 ══ -->
+<div id="class-screen">
+  <div class="topbar">
+    <div class="topbar-logo">PREP SET BUILDER</div>
+    <div class="topbar-info">
+      <div class="tstat">지문 <span id="stat-p">-</span></div>
+      <div class="tstat">질문 <span id="stat-q">1/8</span></div>
+      <div class="tstat">담당 <span id="stat-stu">-</span></div>
+      <button class="btn btn-ghost btn-sm" style="color:#a09a8e;border-color:#3d3a34;" onclick="endClass()">✕ 종료</button>
+    </div>
+  </div>
+  <div class="class-body">
+    <div class="sidebar">
+      <div>
+        <div class="sb-title">점수판 🏆</div>
+        <div id="scoreboard"></div>
+      </div>
+      <div>
+        <div class="sb-title">학생 담당 지문</div>
+        <div id="sidebar-assign"></div>
+      </div>
+      <div>
+        <div class="sb-title">이번 지문 질문</div>
+        <div id="qt-list"></div>
+      </div>
+    </div>
+    <div class="main" id="main-area">
+      <div class="overall-prog">
+        <div class="card-label">전체 진행</div>
+        <div class="op-bar-wrap"><div class="op-bar" id="op-bar" style="width:0%"></div></div>
+        <div class="op-text" id="op-text">0 / 0</div>
+      </div>
+      <div id="score-feedback" style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:var(--green);letter-spacing:1px;opacity:0;transform:translateY(-8px);transition:all .3s;min-height:28px;"></div>
+      <div class="prog-header">
+        <div class="badge badge-red" id="badge-passage">지문 ?</div>
+        <div class="badge badge-gray" id="badge-qnum">질문 1/8</div>
+        <div class="badge badge-blue" id="badge-qtype">-</div>
+      </div>
+
+      <!-- 담당 학생 배너 -->
+      <div class="stu-banner">
+        <div class="avatar" id="stu-avatar">?</div>
+        <div>
+          <div style="display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+            <div class="stu-name" id="stu-name">-</div>
+            <div class="sub-badge" id="sub-badge" style="display:none;">🔄 대타</div>
+          </div>
+          <div class="stu-meta" id="stu-meta"></div>
+        </div>
+      </div>
+
+      <!-- 대타 안내 -->
+      <div class="sub-banner" id="sub-banner"></div>
+
+      <!-- 지문 -->
+      <div class="passage-card">
+        <div class="card-label" id="passage-label">📄 지문</div>
+        <div class="passage-text" id="passage-disp"></div>
+      </div>
+
+      <!-- 일반 질문 카드 (동의어/반의어 제외) -->
+      <div class="question-card" id="q-card">
+        <div class="q-label">❓ 질문</div>
+        <div class="q-text" id="q-disp">-</div>
+        <div class="inline-answer" id="q-answer-box">
+          <div class="inline-answer-label">정답 확인</div>
+          <div class="inline-answer-content" id="q-answer-disp"></div>
+        </div>
+      </div>
+
+      <!-- 동의어/반의어 퀴즈 카드 -->
+      <div class="vocab-quiz-card" id="vocab-card" style="display:none;">
+        <div class="q-label">🔤 동의어 / 반의어</div>
+        <div class="vocab-quiz-word" id="vocab-word">-</div>
+        <div class="vocab-quiz-prompt" id="vocab-prompt">-</div>
+        <div class="vocab-quiz-hint" id="vocab-hint"></div>
+        <div class="inline-answer" id="vocab-answer-box">
+          <div class="inline-answer-label">정답 확인</div>
+          <div class="inline-answer-content" id="vocab-answer-disp"></div>
+        </div>
+      </div>
+
+      <div class="passage-card" id="answer-card" style="display:none;">
+        <div class="card-label">정답 확인</div>
+        <div class="passage-text" id="answer-disp"></div>
+      </div>
+
+      <div class="action-row" id="action-row">
+        <button class="btn btn-ghost" onclick="showAnswer()">답 확인</button>
+        <button class="btn btn-correct" onclick="judge(true)">✓ 맞음</button>
+        <button class="btn btn-wrong" onclick="judge(false)">✗ 모름 → 대타</button>
+        <button class="btn btn-skip" onclick="skipQ()">건너뛰기</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="done-overlay" id="done-overlay">
+  <div class="done-big">완료!</div>
+  <div class="done-sub" id="done-sub"></div>
+  <div id="final-scoreboard" style="margin-top:16px;width:100%;max-width:400px;"></div>
+  <button class="btn btn-red" style="margin-top:16px;" onclick="endClass()">처음으로</button>
+</div>
+
+<script>
+// ══ STATE ══
+let students = [];
+// passages: [{text, selectedSents:[], vocabRows:[{word,syn,ant}], grammarPoints:[]}]
+let passages = [];
+let assignments = [];
+let sessionQueue = [], sessionPos = 0;
+let queueTypes = [], doneTypes = [], currentQType = null, currentQ = '';
+let currentStudent = '', currentPIdx = 0;
+let isSubStudent = false, originalStudent = '';
+let totalQuestions = 0, answeredCount = 0;
+let currentVocabRow = null;
+let scoreMap = {};
+let questionConfigMode = 'fixed';
+let questionCounts = { translate:2, grammar:2, vocab:2 };
+let assignmentSettings = { mode:'single', passagesPerStudent:2 };
+
+const LEGACY_Q_TYPES = [
+  { id:'translate', label:'🔤 문장 해석',
+    gen(pIdx){
+      const p = passages[pIdx];
+      const sents = p.selectedSents && p.selectedSents.length > 0
+        ? p.selectedSents
+        : (p.text.match(/[^.!?]+[.!?]+/g) || [p.text]);
+      const s = sents[Math.floor(Math.random() * sents.length)].trim();
+      return `다음 문장을 우리말로 해석하세요.\n\n"${s}"`;
+    }
+  },
+  { id:'topic',   label:'📌 주제',    gen(){ return '이 글의 주제를 한 문장으로 말하세요.'; } },
+  { id:'gist',    label:'💡 요지',    gen(){ return '이 글의 요지를 한 문장으로 말하세요.'; } },
+  { id:'title',   label:'📰 제목',    gen(){ return '이 글의 제목으로 가장 적절한 것을 말하세요.'; } },
+  { id:'summary', label:'✍️ 한 문장 요약', gen(){ return '이 글 전체를 한 문장으로 요약하세요.'; } },
+  { id:'grammar', label:'📐 어법',
+    gen(){ return '선생님이 물어보는 해당 어법을 설명하세요.'; }
+  },
+  { id:'overall', label:'📖 전체 내용 파악', gen(){ return '이 글의 전체 내용을 핵심 포인트 3가지로 말하세요.'; } },
+  { id:'vocab',   label:'📚 동의어/반의어', gen(){ return '__vocab__'; } }
+];
+
+const Q_TYPES = [
+  {
+    id:'translate',
+    label:'🔤 문장 해석',
+    configurable:true,
+    hint:'선택한 문장 중 랜덤',
+    getPool(passage){
+      const picked = passage.selectedSents && passage.selectedSents.length ? passage.selectedSents : extractSentences(passage.text);
+      return picked.map(sentence => sentence.trim()).filter(Boolean);
+    },
+    buildPrompt(sentence){
+      return `다음 문장을 우리말로 해석하세요.\n\n"${sentence}"`;
+    }
+  },
+  { id:'topic', label:'🌍 주제', configurable:false, buildPrompt(){ return '이 글의 주제를 한 문장으로 말하세요.'; } },
+  { id:'gist', label:'💡 요지', configurable:false, buildPrompt(){ return '이 글의 요지를 한 문장으로 말하세요.'; } },
+  { id:'title', label:'📰 제목', configurable:false, buildPrompt(){ return '이 글의 제목으로 가장 적절한 것을 말하세요.'; } },
+  { id:'summary', label:'✍️ 한 문장 요약', configurable:false, buildPrompt(){ return '이 글 전체를 한 문장으로 요약하세요.'; } },
+  {
+    id:'grammar',
+    label:'📐 어법',
+    configurable:true,
+    hint:'어법 포인트 중 랜덤',
+    getPool(passage){
+      return (passage.grammarPoints || []).map(point => point.trim()).filter(Boolean);
+    },
+    buildPrompt(point){
+      return `다음 어법 포인트를 설명하세요.\n\n"${point}"`;
+    }
+  },
+  { id:'overall', label:'📖 전체 내용 파악', configurable:false, buildPrompt(){ return '이 글의 전체 내용을 핵심 포인트 3가지로 말하세요.'; } },
+  {
+    id:'vocab',
+    label:'📚 동의어/반의어',
+    configurable:true,
+    hint:'단어 세트 중 랜덤',
+    getPool(passage){
+      return (passage.vocabRows || []).filter(row => row.word && row.word.trim());
+    },
+    buildPrompt(){ return '__vocab__'; }
+  }
+];
+const Q_TYPE_MAP = Object.fromEntries(Q_TYPES.map(type => [type.id, type]));
+const CONFIGURABLE_Q_TYPES = Q_TYPES.filter(type => type.configurable);
+
+function shuffle(a){ const r=[...a]; for(let i=r.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[r[i],r[j]]=[r[j],r[i]];} return r; }
+function escapeHtml(value){ return String(value ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function extractSentences(text){
+  return (text.match(/[^.!?]+[.!?]+/g) || [text]).map(sentence => sentence.trim()).filter(Boolean);
+}
+function parsePointLines(raw){
+  const seen = new Set();
+  return String(raw || '')
+    .split(/\r?\n/)
+    .map(line => line.trim())
+    .filter(Boolean)
+    .filter(line => {
+      if(seen.has(line)) return false;
+      seen.add(line);
+      return true;
+    });
+}
+function makePassage(text=''){
+  return { text, selectedSents:[], vocabRows:[], grammarPoints:[] };
+}
+function getQuestionCount(typeId){
+  if(!Q_TYPE_MAP[typeId]?.configurable) return 1;
+  const raw = Number(questionCounts[typeId]);
+  return Number.isFinite(raw) ? Math.max(0, Math.floor(raw)) : 0;
+}
+function getQuestionsPerPassageTotal(){
+  return Q_TYPES.reduce((sum, type) => sum + getQuestionCount(type.id), 0);
+}
+function updateQuestionCount(typeId, value){
+  const raw = Number(value);
+  questionCounts[typeId] = Number.isFinite(raw) ? Math.max(0, Math.floor(raw)) : 0;
+  renderQuestionConfig();
+}
+function renderQuestionConfig(){
+  const items = CONFIGURABLE_Q_TYPES.map(type => `
+    <div class="question-config-item">
+      <div class="question-config-head">
+        <div>
+          <div class="question-config-name">${type.label}</div>
+          <div class="question-config-hint">${type.hint}</div>
+        </div>
+      </div>
+      <input type="number" min="0" value="${getQuestionCount(type.id)}" onchange="updateQuestionCount('${type.id}', this.value)">
+    </div>
+  `).join('');
+  const fixedCount = Q_TYPES.length - CONFIGURABLE_Q_TYPES.length;
+  const perPassage = getQuestionsPerPassageTotal();
+  const total = perPassage * passages.length;
+  document.getElementById('question-config').innerHTML = `
+    <div class="question-config-grid">${items}</div>
+    <div class="question-config-summary">
+      고정 출제: <b>${fixedCount}</b>문항(주제, 요지, 제목, 한 문장 요약, 전체 내용 파악)
+      <br>현재 설정: 지문당 <b>${perPassage}</b>문항${passages.length ? ` · 전체 예상 <b>${total}</b>문항` : ''}
+    </div>
+  `;
+}
+function syncPassageInputsFromDOM(){
+  passages.forEach((passage, pi) => {
+    const grammarInput = document.getElementById(`grammar-input-${pi}`);
+    if(grammarInput) passage.grammarPoints = parsePointLines(grammarInput.value);
+    const tbody = document.getElementById(`vocab-body-${pi}`);
+    if(!tbody) return;
+    tbody.querySelectorAll('tr').forEach((tr, ri) => {
+      const inputs = tr.querySelectorAll('input');
+      if(!passage.vocabRows[ri]) passage.vocabRows[ri] = {word:'',syn:'',ant:''};
+      if(inputs[0]) passage.vocabRows[ri].word = inputs[0].value;
+      if(inputs[1]) passage.vocabRows[ri].syn = inputs[1].value;
+      if(inputs[2]) passage.vocabRows[ri].ant = inputs[2].value;
+    });
+  });
+}
+function validateQuestionSetup(){
+  syncPassageInputsFromDOM();
+  if(getQuestionsPerPassageTotal() <= 0){
+    return { ok:false, message:'질문 개수를 1개 이상 설정하세요.' };
+  }
+  const issues = [];
+  passages.forEach((passage, index) => {
+    const detail = [];
+    CONFIGURABLE_Q_TYPES.forEach(type => {
+      const need = getQuestionCount(type.id);
+      const have = type.getPool(passage).length;
+      if(need > have){
+        const label = type.id === 'translate' ? '해석 문장' : type.id === 'grammar' ? '어법 포인트' : '동의어/반의어';
+        detail.push(`${label} ${have}개 / 설정 ${need}개`);
+      }
+    });
+    if(detail.length) issues.push(`지문 ${index+1}: ${detail.join(', ')}`);
+  });
+  if(issues.length){
+    return {
+      ok:false,
+      message:`다음 지문에 문제 포인트가 부족합니다.\n\n${issues.map(issue => `- ${issue}`).join('\n')}\n\n질문 개수나 지문별 포인트를 다시 설정하세요.`
+    };
+  }
+  return { ok:true };
+}
+function buildQuestionQueue(pIdx){
+  const passage = passages[pIdx];
+  const queue = [];
+  Q_TYPES.forEach(type => {
+    const count = getQuestionCount(type.id);
+    if(!count) return;
+    if(type.configurable){
+      const pool = shuffle(type.getPool(passage)).slice(0, count);
+      pool.forEach((payload, order) => {
+        queue.push({
+          key:`${type.id}-${order}-${pIdx}`,
+          id:type.id,
+          label:type.label,
+          prompt:type.buildPrompt(payload),
+          payload
+        });
+      });
+      return;
+    }
+    queue.push({
+      key:`${type.id}-0-${pIdx}`,
+      id:type.id,
+      label:type.label,
+      prompt:type.buildPrompt(pIdx),
+      payload:null
+    });
+  });
+  return shuffle(queue);
+}
+
+// ══ SETUP ══
+function addStudent(){
+  const inp=document.getElementById('stu-input'); const n=inp.value.trim(); if(!n)return;
+  if(!students.includes(n)) students.push(n); inp.value=''; inp.focus(); renderSetup();
+}
+document.getElementById('stu-input').addEventListener('keydown',e=>{if(e.key==='Enter')addStudent();});
+function bulkAdd(){
+  const raw=document.getElementById('bulk-stu').value.trim(); if(!raw)return;
+  raw.split('\n').map(s=>s.trim()).filter(Boolean).forEach(n=>{if(!students.includes(n))students.push(n);});
+  document.getElementById('bulk-stu').value=''; renderSetup();
+}
+function removeStudent(n){ students=students.filter(s=>s!==n); renderSetup(); }
+
+function addPassage(){
+  const inp=document.getElementById('p-input'); const t=inp.value.trim(); if(!t)return;
+  passages.push({ text:t, selectedSents:[], vocabRows:[] }); inp.value=''; renderSetup();
+}
+function removePassage(i){ passages.splice(i,1); renderSetup(); }
+
+function renderSetup(){
+  document.getElementById('stu-chips').innerHTML=
+    students.map(s=>`<div class="chip">${s}<button class="chip-x" onclick="removeStudent('${s}')">×</button></div>`).join('');
+
+  document.getElementById('p-stack').innerHTML=passages.map((p,pi)=>`
+    <div class="p-card" id="pcard-${pi}">
+      <div class="p-card-header">
+        <span class="p-card-num">지문 ${pi+1}</span>
+        <span class="p-card-preview">${p.text.slice(0,50)}...</span>
+        <button class="p-card-del" onclick="removePassage(${pi})">×</button>
+      </div>
+      <div class="p-card-body">
+        <!-- 문장 선택 -->
+        <div>
+          <div style="font-size:0.7rem;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:5px;">해석 문장 선택 (클릭으로 선택)</div>
+          <div class="sentence-select-area" id="sent-area-${pi}">${buildSentenceHTML(pi)}</div>
+          <div class="selected-count" id="sent-count-${pi}">${p.selectedSents.length}개 선택됨</div>
+        </div>
+        <!-- 동의어/반의어 표 -->
+        <div>
+          <div style="font-size:0.7rem;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:5px;">동의어 / 반의어</div>
+          <textarea
+            style="min-height:36px;font-size:0.78rem;color:var(--muted);background:rgba(26,95,200,.03);border-color:rgba(26,95,200,.2);margin-bottom:6px;resize:none;"
+            placeholder="엑셀에서 단어/동의어/반의어 3열 복사 후 여기에 붙여넣기 (Ctrl+V) — 자동으로 표에 입력됩니다"
+            rows="2"
+            onpaste="handleVocabPaste(${pi}, event)"
+          ></textarea>
+          <table class="vocab-table">
+            <thead><tr><th>단어</th><th>동의어</th><th>반의어</th></tr></thead>
+            <tbody id="vocab-body-${pi}">${buildVocabRows(pi)}</tbody>
+          </table>
+          <div class="vocab-add-row">
+            <button class="btn btn-ghost btn-sm" onclick="addVocabRow(${pi})">+ 행 추가</button>
+          </div>
+        </div>
+      </div>
+    </div>`).join('');
+
+  document.getElementById('stu-count').textContent=students.length;
+  document.getElementById('p-count').textContent=passages.length;
+}
+
+function buildSentenceHTML(pi){
+  const p=passages[pi];
+  const sents=p.text.match(/[^.!?]+[.!?]+/g)||[p.text];
+  return sents.map((s,si)=>{
+    const sel=p.selectedSents.includes(s.trim());
+    return `<span class="sent${sel?' selected':''}" onclick="toggleSent(${pi},${si})">${s}</span>`;
+  }).join(' ');
+}
+
+function toggleSent(pi, si){
+  const p=passages[pi];
+  const sents=p.text.match(/[^.!?]+[.!?]+/g)||[p.text];
+  const s=sents[si].trim();
+  const idx=p.selectedSents.indexOf(s);
+  if(idx===-1) p.selectedSents.push(s);
+  else p.selectedSents.splice(idx,1);
+  document.getElementById(`sent-area-${pi}`).innerHTML=buildSentenceHTML(pi);
+  document.getElementById(`sent-count-${pi}`).textContent=`${p.selectedSents.length}개 선택됨`;
+}
+
+function buildVocabRows(pi){
+  return passages[pi].vocabRows.map((r,ri)=>`
+    <tr>
+      <td><input type="text" value="${r.word}" placeholder="단어" oninput="updateVocab(${pi},${ri},'word',this.value)"/></td>
+      <td><input type="text" value="${r.syn}" placeholder="동의어" oninput="updateVocab(${pi},${ri},'syn',this.value)"/></td>
+      <td><input type="text" value="${r.ant}" placeholder="반의어" oninput="updateVocab(${pi},${ri},'ant',this.value)"/></td>
+    </tr>`).join('');
+}
+
+function addVocabRow(pi){
+  passages[pi].vocabRows.push({word:'',syn:'',ant:''});
+  document.getElementById(`vocab-body-${pi}`).innerHTML=buildVocabRows(pi);
+}
+
+function updateVocab(pi,ri,field,val){
+  passages[pi].vocabRows[ri][field]=val;
+}
+
+// ══ 배정 ══
+function doAssign(){
+  if(!students.length){alert('학생을 1명 이상 추가하세요.');return;}
+  if(!passages.length){alert('지문을 1개 이상 추가하세요.');return;}
+  const pIdxs=shuffle([...Array(passages.length).keys()]);
+  const stuShuffled=shuffle([...students]);
+  assignments=stuShuffled.map(s=>({student:s,passageIdxs:[]}));
+  pIdxs.forEach((pIdx,i)=>assignments[i%stuShuffled.length].passageIdxs.push(pIdx));
+  assignments.forEach(a=>a.passageIdxs.sort((x,y)=>x-y));
+  document.getElementById('assign-grid').innerHTML=
+    assignments.map(a=>`<div class="assign-card">
+      <div class="ac-name"><div class="ac-avatar">${a.student.charAt(0)}</div>${a.student}</div>
+      <div class="ac-tags">${a.passageIdxs.map(i=>`<div class="ac-tag">지문 ${i+1}</div>`).join('')}</div>
+    </div>`).join('');
+  // 어느 화면에서 호출되든 동작
+  document.getElementById('setup').style.display='none';
+  document.getElementById('assign-screen').style.display='block';
+}
+function goBack(){ document.getElementById('assign-screen').style.display='none'; document.getElementById('setup').style.display='block'; }
+
+// ── 엑셀 붙여넣기 처리
+function handleVocabPaste(pi, e){
+  const text=(e.clipboardData||window.clipboardData).getData('text');
+  if(!text.includes('\t')) return; // 탭 없으면 일반 입력
+  e.preventDefault();
+  const rows=text.trim().split(/\r?\n/).map(r=>r.split('\t').map(c=>c.trim()));
+  rows.forEach(cols=>{
+    if(!cols[0]&&!cols[1]&&!cols[2]) return;
+    passages[pi].vocabRows.push({word:cols[0]||'',syn:cols[1]||'',ant:cols[2]||''});
+  });
+  document.getElementById(`vocab-body-${pi}`).innerHTML=buildVocabRows(pi);
+}
+
+// ══ 수업 시작 ══
+function startClass(){
+  sessionQueue=[];
+  for(let pIdx=0;pIdx<passages.length;pIdx++){
+    const owner=assignments.find(a=>a.passageIdxs.includes(pIdx));
+    if(owner) sessionQueue.push({student:owner.student,pIdx});
+  }
+  totalQuestions=passages.length*8; answeredCount=0; sessionPos=0;
+  scoreMap={}; students.forEach(s=>scoreMap[s]=0);
+  document.getElementById('assign-screen').style.display='none';
+  document.getElementById('class-screen').style.display='flex';
+  loadPassageTurn();
+}
+
+function loadPassageTurn(){
+  if(sessionPos>=sessionQueue.length){ showDone(); return; }
+  const {student,pIdx}=sessionQueue[sessionPos];
+  currentStudent=student; currentPIdx=pIdx;
+  isSubStudent=false; originalStudent='';
+
+  // vocab 유형: 해당 지문에 vocabRows 있을 때만 포함
+  const hasVocab = passages[pIdx].vocabRows.filter(r=>r.word.trim()).length > 0;
+  const types = hasVocab ? [...Q_TYPES] : Q_TYPES.filter(q=>q.id!=='vocab');
+  // vocab 없으면 8→7문항, 있으면 8문항
+  queueTypes=shuffle(types); doneTypes=[];
+
+  loadQuestionTurn();
+}
+
+function loadQuestionTurn(){
+  if(!queueTypes.length){ sessionPos++; loadPassageTurn(); return; }
+  currentQType=queueTypes.shift();
+
+  // 대타 후 원래 담당 학생으로 복귀
+  currentStudent = sessionQueue[sessionPos].student;
+  isSubStudent=false; originalStudent='';
+
+  if(currentQType.id==='vocab'){
+    const rows=passages[currentPIdx].vocabRows.filter(r=>r.word.trim());
+    currentVocabRow=rows[Math.floor(Math.random()*rows.length)];
+    currentQ='__vocab__';
+  } else {
+    currentQ=currentQType.gen(currentPIdx);
+    currentVocabRow=null;
+  }
+  renderTurn(); 
+}
+
+// 대타 지정
+function assignSubStudent(){
+  const others=students.filter(s=>s!==currentStudent);
+  if(!others.length) return null;
+  return others[Math.floor(Math.random()*others.length)];
+}
+
+function renderTurn(){
+  const pNum=currentPIdx+1;
+  const qDone=doneTypes.length;
+  const qTotal=queueTypes.length+doneTypes.length+1;
+
+  document.getElementById('stat-p').textContent=`지문 ${pNum}`;
+  document.getElementById('stat-q').textContent=`${qDone+1}/${qTotal}`;
+  document.getElementById('stat-stu').textContent=currentStudent;
+
+  document.getElementById('badge-passage').textContent=`지문 ${pNum}`;
+  document.getElementById('badge-qnum').textContent=`질문 ${qDone+1}/${qTotal}`;
+  document.getElementById('badge-qtype').textContent=currentQType.label;
+
+  document.getElementById('stu-avatar').textContent=currentStudent.charAt(0);
+  document.getElementById('stu-avatar').className=`avatar${isSubStudent?' sub-stu':''}`;
+  document.getElementById('stu-name').textContent=currentStudent;
+  document.getElementById('sub-badge').style.display=isSubStudent?'inline-flex':'none';
+
+  const myPs=assignments.find(a=>a.student===currentStudent)?.passageIdxs||[];
+  const label = isSubStudent ? `대타 · 원래 담당: ${originalStudent}` : `담당 지문: ${myPs.map(i=>`지문 ${i+1}`).join(', ')}`;
+  document.getElementById('stu-meta').textContent=label;
+
+  const subBanner=document.getElementById('sub-banner');
+  if(isSubStudent){
+    subBanner.className='sub-banner show';
+    subBanner.textContent=`⚡ ${originalStudent} 학생 대신 ${currentStudent} 학생이 대답합니다!`;
+  } else { subBanner.className='sub-banner'; }
+
+  document.getElementById('passage-label').textContent=`📄 지문 ${pNum}`;
+  document.getElementById('passage-disp').textContent=passages[currentPIdx].text;
+
+  // 카드 전환
+  if(currentQType.id==='vocab'){
+    document.getElementById('q-card').style.display='none';
+    document.getElementById('vocab-card').style.display='block';
+    document.getElementById('vocab-word').textContent=currentVocabRow.word;
+    const hints=[];
+    if(currentVocabRow.syn) hints.push('동의어 있음');
+    if(currentVocabRow.ant) hints.push('반의어 있음');
+    document.getElementById('vocab-hint').textContent=hints.join(' · ');
+    document.getElementById('vocab-answer').className='vocab-quiz-answer';
+    const content=[];
+    if(currentVocabRow.syn) content.push(`<span class="va-tag va-syn">≈ ${currentVocabRow.syn}</span>`);
+    if(currentVocabRow.ant) content.push(`<span class="va-tag va-ant">↔ ${currentVocabRow.ant}</span>`);
+    document.getElementById('vocab-answer-content').innerHTML=content.join('');
+  } else {
+    document.getElementById('vocab-card').style.display='none';
+    document.getElementById('q-card').style.display='block';
+    document.getElementById('q-disp').textContent=currentQ;
+  }
+
+  const pct=totalQuestions>0?Math.round(answeredCount/totalQuestions*100):0;
+  document.getElementById('op-bar').style.width=pct+'%';
+  document.getElementById('op-text').textContent=`${answeredCount} / ${totalQuestions} 문항`;
+
+  renderSidebar();
+  const ma=document.getElementById('main-area');
+  ma.classList.remove('fade-in'); void ma.offsetWidth; ma.classList.add('fade-in');
+}
+
+function showVocabAnswer(){
+  document.getElementById('vocab-answer').className='vocab-quiz-answer show';
+}
+
+function judge(correct){
+  answeredCount++;
+  if(correct){
+    scoreMap[currentStudent]=(scoreMap[currentStudent]||0)+1;
+    doneTypes.push(currentQType);
+    showScoreFeedback(currentStudent);
+    loadQuestionTurn();
+  } else {
+    // 대타 지정
+    if(isSubStudent){
+      // 대타도 못 맞히면 넘어감
+      doneTypes.push(currentQType);
+      loadQuestionTurn();
+    } else {
+      originalStudent=currentStudent;
+      const sub=assignSubStudent();
+      if(sub){ isSubStudent=true; currentStudent=sub; renderTurn(); }
+      else { doneTypes.push(currentQType); loadQuestionTurn(); }
+    }
+  }
+}
+
+function showScoreFeedback(name){
+  const el=document.getElementById('score-feedback');
+  el.textContent=`+1점 🎯 ${name} (${scoreMap[name]}점)`;
+  el.style.opacity='1'; el.style.transform='translateY(0)';
+  setTimeout(()=>{ el.style.opacity='0'; el.style.transform='translateY(-8px)'; },1200);
+}
+
+function skipQ(){
+  answeredCount++;
+  doneTypes.push(currentQType);
+  loadQuestionTurn();
+}
+
+function renderSidebar(){
+  // 점수판
+  const sorted=students.slice().sort((a,b)=>(scoreMap[b]||0)-(scoreMap[a]||0));
+  document.getElementById('scoreboard').innerHTML=
+    sorted.map((s,i)=>{
+      const sc=scoreMap[s]||0;
+      const isCur=s===currentStudent;
+      return `<div style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;${isCur?'background:rgba(200,55,26,.06);':''}margin-bottom:3px;">
+        <span style="font-family:'Bebas Neue',sans-serif;font-size:0.9rem;color:var(--muted);width:16px;text-align:center;">${i+1}</span>
+        <span style="flex:1;font-size:0.82rem;font-weight:${isCur?'700':'400'};color:${isCur?'var(--accent)':'var(--ink)'};">${s}</span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:0.78rem;font-weight:700;color:${sc>0?'var(--green)':'var(--muted)'};">${sc}점</span>
+      </div>`;
+    }).join('');
+  const donePs=sessionQueue.slice(0,sessionPos).map(q=>q.pIdx);
+  document.getElementById('sidebar-assign').innerHTML=
+    assignments.map(a=>{
+      const isCur=a.student===currentStudent||a.student===originalStudent;
+      return `<div class="al-row ${isCur?'al-active':''}">
+        <div class="al-name">${isCur?'▶ ':''}${a.student}</div>
+        <div class="al-tags">${a.passageIdxs.map(p=>{
+          const done=donePs.includes(p);
+          const cur=p===currentPIdx&&a.student===sessionQueue[sessionPos]?.student;
+          return `<span class="al-tag ${cur?'current':done?'done':''}">${p+1}번</span>`;
+        }).join('')}</div>
+      </div>`;
+    }).join('');
+
+  const doneIds=doneTypes.map(q=>q.id);
+  document.getElementById('qt-list').innerHTML=
+    Q_TYPES.map(qt=>{
+      const done=doneIds.includes(qt.id);
+      const cur=qt.id===currentQType?.id;
+      return `<div class="qt-row ${done?'qt-done':cur?'qt-active':'qt-wait'}">${qt.label}${cur?' ◀':done?' ✓':''}</div>`;
+    }).join('');
+}
+
+function showDone(){
+  document.getElementById('done-sub').textContent=`지문 ${passages.length}개 · ${answeredCount}문항 완료 🎓`;
+  // 점수 정렬
+  const sorted=students.slice().sort((a,b)=>(scoreMap[b]||0)-(scoreMap[a]||0));
+  const maxScore=scoreMap[sorted[0]]||0;
+  document.getElementById('final-scoreboard').innerHTML=`
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:2px;color:var(--muted);margin-bottom:12px;text-align:center;">최종 점수</div>
+    ${sorted.map((s,i)=>{
+      const sc=scoreMap[s]||0;
+      const isFirst=i===0&&sc>0;
+      const pct=maxScore>0?Math.round(sc/maxScore*100):0;
+      return `<div style="background:${isFirst?'rgba(200,55,26,.08)':'var(--card)'};border:1.5px solid ${isFirst?'rgba(200,55,26,.4)':'var(--border)'};border-radius:10px;padding:12px 16px;margin-bottom:8px;display:flex;align-items:center;gap:12px;">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:${isFirst?'var(--accent)':'var(--muted)'};width:28px;text-align:center;">${isFirst?'🥇':i+1}</div>
+        <div style="flex:1;">
+          <div style="font-weight:900;font-size:1rem;">${s}</div>
+          <div style="background:var(--border);border-radius:999px;height:5px;margin-top:5px;overflow:hidden;"><div style="height:100%;width:${pct}%;background:${isFirst?'var(--accent)':'var(--accent2)'};border-radius:999px;"></div></div>
+        </div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;color:${isFirst?'var(--accent)':'var(--ink)'};">${sc}점</div>
+      </div>`;
+    }).join('')}`;
+  document.getElementById('done-overlay').classList.add('show');
+}
+function endClass(){
+  document.getElementById('done-overlay').classList.remove('show');
+  document.getElementById('class-screen').style.display='none';
+  document.getElementById('setup').style.display='block';
+  students=[]; passages=[]; assignments=[]; sessionQueue=[];
+  answeredCount=0; sessionPos=0; scoreMap={};
+  renderSetup();
+}
+
+// ══ 세션 저장 / 불러오기 ══
+function showToast(msg, color='var(--accent)'){
+  const t=document.getElementById('toast');
+  t.textContent=msg;
+  t.style.borderLeftColor=color;
+  t.style.opacity='1'; t.style.transform='translateX(-50%) translateY(0)';
+  clearTimeout(t._timer);
+  t._timer=setTimeout(()=>{ t.style.opacity='0'; t.style.transform='translateX(-50%) translateY(20px)'; },2400);
+}
+
+function saveSession(){
+  if(!students.length && !passages.length){
+    showToast('⚠️ 저장할 내용이 없습니다.'); return;
+  }
+  // vocabRows 내 input DOM 값 최신화 (renderSetup 없이 직접 수정했을 경우 대비)
+  passages.forEach((p,pi)=>{
+    const tbody=document.getElementById(`vocab-body-${pi}`);
+    if(!tbody) return;
+    tbody.querySelectorAll('tr').forEach((tr,ri)=>{
+      const inputs=tr.querySelectorAll('input');
+      if(inputs[0]) p.vocabRows[ri].word=inputs[0].value;
+      if(inputs[1]) p.vocabRows[ri].syn=inputs[1].value;
+      if(inputs[2]) p.vocabRows[ri].ant=inputs[2].value;
+    });
+  });
+
+  const data = { version:1, savedAt: new Date().toISOString(), students, passages };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type:'application/json' });
+  const url  = URL.createObjectURL(blob);
+  const now  = new Date();
+  const stamp= `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}_${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}`;
+  const a    = document.createElement('a');
+  a.href=url; a.download=`rotation_session_${stamp}.json`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast(`💾 저장 완료 — 학생 ${students.length}명 · 지문 ${passages.length}개`, 'var(--green)');
+}
+
+function loadSession(e){
+  const file=e.target.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    try{
+      const data=JSON.parse(ev.target.result);
+      if(!data.students || !data.passages) throw new Error('형식 오류');
+      students=data.students;
+      passages=data.passages.map(p=>({
+        text: p.text||'',
+        selectedSents: p.selectedSents||[],
+        vocabRows: (p.vocabRows||[]).map(r=>({word:r.word||'',syn:r.syn||'',ant:r.ant||''}))
+      }));
+      assignments=[]; sessionQueue=[];
+      renderSetup();
+      showToast(`📂 불러오기 완료 — 학생 ${students.length}명 · 지문 ${passages.length}개`, 'var(--accent2)');
+    } catch(err){
+      showToast('⚠️ 파일을 읽을 수 없습니다. JSON 형식을 확인하세요.');
+    }
+  };
+  reader.readAsText(file);
+  e.target.value=''; // 같은 파일 재선택 가능하도록 초기화
+}
+</script>
+<script>
+const ROTATION_BIG_PICTURE_FIELDS = [
+  ['topic', '주제', '이 글의 주제를 말해 보세요.']
+];
+const ROTATION_FIXED_FIELDS = [
+  ['macro', '주제']
+];
+const ROTATION_ANSWER_FIELDS = [
+  ...ROTATION_BIG_PICTURE_FIELDS.map(([id, label]) => [id, label])
+];
+const ROTATION_CONFIG_TYPES = [
+  { id:'translate', label:'문장 해석', hint:'선택한 문장 중 랜덤 출제' },
+  { id:'grammar', label:'어법', hint:'입력한 어법 포인트 중 랜덤 출제' },
+  { id:'vocab', label:'동의어 / 반의어', hint:'입력한 단어 세트 중 랜덤 출제' }
+];
+const ROTATION_QUESTION_CONFIG_MODES = Object.freeze({ fixed:'fixed', selective:'selective' });
+const ROTATION_FIXED_CONFIG_COUNTS = Object.freeze({ translate:2, grammar:2, vocab:2 });
+const ROTATION_SELECTIVE_DEFAULT_COUNTS = Object.freeze({ ...ROTATION_FIXED_CONFIG_COUNTS });
+const ROTATION_ASSIGNMENT_DEFAULTS = Object.freeze({ mode:'single', passagesPerStudent:2 });
+const ROTATION_TYPE_META = Object.fromEntries([
+  ...ROTATION_FIXED_FIELDS.map(([id, label]) => [id, { id, label, configurable:false }]),
+  ...ROTATION_CONFIG_TYPES.map(type => [type.id, { ...type, configurable:true }])
+]);
+let currentQuestionState = null;
+
+function htmlEscV2(value){
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+function shuffleV2(list){
+  const copied = [...list];
+  for(let i=copied.length-1;i>0;i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [copied[i], copied[j]] = [copied[j], copied[i]];
+  }
+  return copied;
+}
+function uniqueStringsV2(list){
+  return [...new Set((Array.isArray(list) ? list : []).map(item => String(item || '').trim()).filter(Boolean))];
+}
+function extractSentencesV2(text){
+  return uniqueStringsV2((String(text || '').match(/[^.!?]+[.!?]+/g) || [String(text || '')]).map(sentence => sentence.trim()));
+}
+function createQuestionAnswersV2(source = {}){
+  const base = { topic:'' };
+  ROTATION_ANSWER_FIELDS.forEach(([key]) => { base[key] = String(source?.[key] || ''); });
+  return base;
+}
+function normalizeGrammarRowV2(row = {}){
+  if(typeof row === 'string') return { point:row.trim(), answer:'' };
+  return { point:String(row.point || '').trim(), answer:String(row.answer || '') };
+}
+function normalizeVocabRowV2(row = {}){
+  return {
+    word:String(row.word || '').trim(),
+    meaning:String(row.meaning || row.mean || '').trim(),
+    syn:String(row.syn || '').trim(),
+    ant:String(row.ant || '').trim(),
+    antMeaning:String(row.antMeaning || row.ant_meaning || '').trim()
+  };
+}
+function normalizeQuestionConfigModeV2(value){
+  return value === ROTATION_QUESTION_CONFIG_MODES.selective
+    ? ROTATION_QUESTION_CONFIG_MODES.selective
+    : ROTATION_QUESTION_CONFIG_MODES.fixed;
+}
+function normalizeQuestionCountsV2(source = {}){
+  const normalized = { ...ROTATION_SELECTIVE_DEFAULT_COUNTS };
+  ROTATION_CONFIG_TYPES.forEach(type => {
+    const raw = Number(source?.[type.id]);
+    normalized[type.id] = Number.isFinite(raw) ? Math.max(0, Math.floor(raw)) : normalized[type.id];
+  });
+  return normalized;
+}
+function normalizeAssignmentSettingsV2(source = {}){
+  const mode = source?.mode === 'multi' ? 'multi' : 'single';
+  const rawCount = Number(source?.passagesPerStudent);
+  return {
+    mode,
+    passagesPerStudent: mode === 'multi'
+      ? (Number.isFinite(rawCount) ? Math.max(2, Math.floor(rawCount)) : ROTATION_ASSIGNMENT_DEFAULTS.passagesPerStudent)
+      : 1
+  };
+}
+function getPassagesPerStudentTargetV2(){
+  assignmentSettings = normalizeAssignmentSettingsV2(assignmentSettings);
+  return assignmentSettings.mode === 'multi' ? assignmentSettings.passagesPerStudent : 1;
+}
+function normalizePassageV2(passage = {}){
+  const text = String(passage.text || '');
+  const selectedSents = uniqueStringsV2(passage.selectedSents || []);
+  const translationAnswers = {};
+  const rawTranslationAnswers = passage.translationAnswers && typeof passage.translationAnswers === 'object'
+    ? passage.translationAnswers
+    : {};
+  selectedSents.forEach(sentence => {
+    translationAnswers[sentence] = String(rawTranslationAnswers[sentence] || '');
+  });
+  const grammarRows = Array.isArray(passage.grammarRows)
+    ? passage.grammarRows.map(normalizeGrammarRowV2)
+    : Array.isArray(passage.grammarPoints)
+      ? passage.grammarPoints.map(point => normalizeGrammarRowV2({ point, answer:'' }))
+      : [];
+  const vocabRows = (passage.vocabRows || []).map(normalizeVocabRowV2);
+  return {
+    text,
+    selectedSents,
+    translationAnswers,
+    grammarRows,
+    vocabRows,
+    questionAnswers:createQuestionAnswersV2(passage.questionAnswers || {})
+  };
+}
+function normalizeStudentsV2(list){
+  return uniqueStringsV2(list);
+}
+function makePassage(text = ''){
+  return normalizePassageV2({ text });
+}
+function normalizeAllSetupStateV2(){
+  students = normalizeStudentsV2(students);
+  passages = (Array.isArray(passages) ? passages : []).map(normalizePassageV2);
+  questionConfigMode = normalizeQuestionConfigModeV2(questionConfigMode);
+  questionCounts = normalizeQuestionCountsV2(questionCounts);
+  assignmentSettings = normalizeAssignmentSettingsV2(assignmentSettings);
+}
+function getQuestionCount(typeId){
+  if(!ROTATION_TYPE_META[typeId]?.configurable) return 1;
+  questionConfigMode = normalizeQuestionConfigModeV2(questionConfigMode);
+  if(questionConfigMode === ROTATION_QUESTION_CONFIG_MODES.fixed){
+    return ROTATION_FIXED_CONFIG_COUNTS[typeId] || 0;
+  }
+  questionCounts = normalizeQuestionCountsV2(questionCounts);
+  return questionCounts[typeId] || 0;
+}
+function getQuestionsPerPassageTotalV2(){
+  return ROTATION_FIXED_FIELDS.length + ROTATION_CONFIG_TYPES.reduce((sum, type) => sum + getQuestionCount(type.id), 0);
+}
+function getPassageQuestionCapacityV2(passage){
+  return ROTATION_FIXED_FIELDS.length
+    + Math.min(getQuestionCount('translate'), getValidSelectedLinesV3(passage).length)
+    + Math.min(getQuestionCount('grammar'), getValidGrammarRowsV2(passage).length)
+    + Math.min(getQuestionCount('vocab'), getValidVocabRowsV2(passage).length);
+}
+function getStudentQuestionCapacityV2(assignment){
+  return (assignment?.passageIdxs || []).reduce((sum, pIdx) => {
+    const passage = passages[pIdx];
+    return sum + (passage ? getPassageQuestionCapacityV2(passage) : 0);
+  }, 0);
+}
+function getAssignmentPassageIndexV2(assignment){
+  const pIdx = Array.isArray(assignment?.passageIdxs) ? assignment.passageIdxs[0] : -1;
+  return Number.isInteger(pIdx) ? pIdx : -1;
+}
+function getUnassignedPassageIndicesV2(){
+  const assigned = new Set(assignments.flatMap(item => Array.isArray(item?.passageIdxs) ? item.passageIdxs : []).filter(index => Number.isInteger(index) && index >= 0));
+  return passages.map((_, index) => index).filter(index => !assigned.has(index));
+}
+function normalizeAssignmentPassageIndicesV2(indices){
+  return [...new Set((Array.isArray(indices) ? indices : [])
+    .map(index => Number(index))
+    .filter(index => Number.isInteger(index) && index >= 0 && index < passages.length))].sort((a, b) => a - b);
+}
+function buildRandomAssignmentsV2(){
+  const targetPerStudent = getPassagesPerStudentTargetV2();
+  const buckets = Object.fromEntries(students.map(student => [student, []]));
+  const studentOrder = shuffleV2([...students]);
+  const shuffledPassages = shuffleV2([...Array(passages.length).keys()]);
+  let cursor = 0;
+  for(let round = 0; round < targetPerStudent && cursor < shuffledPassages.length; round += 1){
+    studentOrder.forEach(student => {
+      if(cursor >= shuffledPassages.length) return;
+      buckets[student].push(shuffledPassages[cursor]);
+      cursor += 1;
+    });
+  }
+  assignments = students.map(student => ({
+    student,
+    passageIdxs:normalizeAssignmentPassageIndicesV2(buckets[student])
+  }));
+}
+function setAssignmentPassagesV2(student, nextIndices){
+  const target = assignments.find(item => item.student === student);
+  if(!target) return;
+  const normalized = normalizeAssignmentPassageIndicesV2(nextIndices).slice(0, getPassagesPerStudentTargetV2());
+  assignments.forEach(item => {
+    if(item.student !== student){
+      item.passageIdxs = normalizeAssignmentPassageIndicesV2((item.passageIdxs || []).filter(index => !normalized.includes(index)));
+    }
+  });
+  target.passageIdxs = normalized;
+  renderAssignmentCardsV2();
+}
+function updateAssignmentPassageV2(student, value){
+  const nextPIdx = value === '' ? -1 : Number(value);
+  if(value !== '' && !Number.isInteger(nextPIdx)) return;
+  setAssignmentPassagesV2(student, nextPIdx >= 0 ? [nextPIdx] : []);
+}
+function toggleAssignmentPassageV2(student, pIdx, checked){
+  const target = assignments.find(item => item.student === student);
+  if(!target) return;
+  const current = normalizeAssignmentPassageIndicesV2(target.passageIdxs);
+  if(checked){
+    const maxCount = getPassagesPerStudentTargetV2();
+    if(!current.includes(pIdx) && current.length >= maxCount){
+      showToast(`학생당 최대 ${maxCount}개까지만 배정됩니다.`);
+      renderAssignmentCardsV2();
+      return;
+    }
+    setAssignmentPassagesV2(student, [...current, pIdx]);
+    return;
+  }
+  setAssignmentPassagesV2(student, current.filter(index => index !== pIdx));
+}
+function renderAssignmentCardsV2(){
+  const targetPerStudent = getPassagesPerStudentTargetV2();
+  const assignedStudentCount = assignments.filter(item => (item.passageIdxs || []).length > 0).length;
+  const totalAssignedPassages = assignments.reduce((sum, item) => sum + (item.passageIdxs || []).length, 0);
+  const emptyStudentCount = assignments.length - assignedStudentCount;
+  const unassignedPassages = getUnassignedPassageIndicesV2();
+  document.getElementById('assign-summary').innerHTML = `
+    <div class="assign-summary-title">
+      학생 ${students.length}명 중 <b>${assignedStudentCount}</b>명에게 지문이 배정되었습니다.${emptyStudentCount ? ` 아직 비어 있는 학생 ${emptyStudentCount}명` : ''}
+    </div>
+    <div class="assign-summary-sub">
+      ${assignmentSettings.mode === 'multi'
+        ? `랜덤 배정은 학생당 최대 ${targetPerStudent}지문까지 돌아가며 배정합니다. 지문이 모자라면 뒤 라운드에서 일부 학생은 덜 받을 수 있습니다.`
+        : '랜덤 배정은 학생 수만큼만 지문을 골라서 1명당 1지문만 배정합니다.'}
+      아래 선택칸에서 직접 바꾸면 같은 지문은 이전 학생에게서 자동으로 빠집니다.
+    </div>
+    <div class="assign-summary-sub">현재 배정된 지문 수: <b>${totalAssignedPassages}</b> / ${passages.length}</div>
+    ${unassignedPassages.length ? `<div class="assign-summary-tags">${unassignedPassages.map(index => `<div class="ac-tag">${htmlEscV2(getPassageShortLabelV2(passages[index], index))}</div>`).join('')}</div>` : ''}
+  `;
+  document.getElementById('assign-grid').innerHTML = assignments.map(item => {
+    const assignedPIdx = getAssignmentPassageIndexV2(item);
+    const assignedPassages = normalizeAssignmentPassageIndicesV2(item.passageIdxs);
+    return `
+      <div class="assign-card">
+        <div class="ac-name"><div class="ac-avatar">${htmlEscV2(item.student.charAt(0))}</div>${htmlEscV2(item.student)}</div>
+        <div class="ac-tags">${assignedPassages.map(index => `<div class="ac-tag">${htmlEscV2(getPassageShortLabelV2(passages[index], index))}</div>`).join('')}</div>
+        ${assignedPassages.length ? '' : '<div class="assign-empty">아직 배정된 지문이 없습니다.</div>'}
+        <div class="assign-select-wrap">
+          <div class="assign-select-label">담당 지문</div>
+          ${assignmentSettings.mode === 'multi'
+            ? `
+              <div class="assign-checklist">
+                ${passages.map((passage, index) => {
+                  const checked = assignedPassages.includes(index);
+                  const disabled = !checked && assignedPassages.length >= targetPerStudent;
+                  return `
+                    <label class="assign-check-item${checked ? ' active' : ''}${disabled ? ' disabled' : ''}">
+                      <input type="checkbox" ${checked ? 'checked' : ''} ${disabled ? 'disabled' : ''} onchange='toggleAssignmentPassageV2(${JSON.stringify(item.student)}, ${index}, this.checked)'>
+                      <span>${htmlEscV2(getPassageDisplayNameV2(passage, index))}</span>
+                    </label>
+                  `;
+                }).join('')}
+              </div>
+              <div class="assign-config-meta">학생당 최대 ${targetPerStudent}개까지 선택할 수 있습니다.</div>
+            `
+            : `
+              <select class="assign-select" onchange='updateAssignmentPassageV2(${JSON.stringify(item.student)}, this.value)'>
+                <option value="" ${assignedPIdx < 0 ? 'selected' : ''}>배정 안 함</option>
+                ${passages.map((passage, index) => `<option value="${index}" ${index === assignedPIdx ? 'selected' : ''}>${htmlEscV2(getPassageDisplayNameV2(passage, index))}</option>`).join('')}
+              </select>
+              <div class="assign-config-meta">이번 구성은 지문당 ${getQuestionsPerPassageTotalV2()}문항으로 출제됩니다.</div>
+            `}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+function getValidGrammarRowsV2(passage){
+  return (passage.grammarRows || []).map(normalizeGrammarRowV2).filter(row => row.point);
+}
+function getValidVocabRowsV2(passage){
+  return (passage.vocabRows || []).map(normalizeVocabRowV2).filter(row => row.word && row.meaning);
+}
+function renderQuestionConfig(){
+  const items = ROTATION_CONFIG_TYPES.map(type => `
+    <div class="question-config-item">
+      <div class="question-config-head">
+        <div>
+          <div class="question-config-name">${type.label}</div>
+          <div class="question-config-hint">${type.hint}</div>
+        </div>
+      </div>
+      <input type="number" min="0" value="${getQuestionCount(type.id)}" onchange="updateQuestionCount('${type.id}', this.value)">
+    </div>
+  `).join('');
+  const perPassage = getQuestionsPerPassageTotalV2();
+  const total = perPassage * passages.length;
+  document.getElementById('question-config').innerHTML = `
+    <div class="question-config-grid">${items}</div>
+    <div class="question-config-summary">
+      고정 출제: <b>${ROTATION_FIXED_FIELDS.length}</b>문항
+      <br>현재 설정: 지문당 <b>${perPassage}</b>문항${passages.length ? ` · 전체 예상 <b>${total}</b>문항` : ''}
+    </div>
+  `;
+}
+function updateQuestionCount(typeId, value){
+  questionCounts = normalizeQuestionCountsV2({ ...questionCounts, [typeId]:value });
+  renderQuestionConfig();
+}
+function addPassage(){
+  const input = document.getElementById('p-input');
+  const text = input.value.trim();
+  if(!text) return;
+  passages.push(makePassage(text));
+  input.value = '';
+  renderSetup();
+}
+function removePassage(index){
+  passages.splice(index, 1);
+  renderSetup();
+}
+function buildSentenceHTML(pi){
+  return extractSentencesV2(passages[pi].text).map((sentence, si) => {
+    const selected = passages[pi].selectedSents.includes(sentence);
+    return `<span class="sent${selected ? ' selected' : ''}" onclick="toggleSent(${pi}, ${si})">${htmlEscV2(sentence)}</span>`;
+  }).join(' ');
+}
+function toggleSent(pi, si){
+  const sentence = extractSentencesV2(passages[pi].text)[si];
+  if(!sentence) return;
+  const selected = passages[pi].selectedSents || [];
+  const index = selected.indexOf(sentence);
+  if(index === -1){
+    selected.push(sentence);
+    passages[pi].translationAnswers[sentence] = passages[pi].translationAnswers[sentence] || '';
+  } else {
+    selected.splice(index, 1);
+    delete passages[pi].translationAnswers[sentence];
+  }
+  passages[pi].selectedSents = selected;
+  renderSetup();
+}
+function updateTranslationAnswer(pi, selectedIndex, value){
+  const sentence = passages[pi].selectedSents[selectedIndex];
+  if(!sentence) return;
+  passages[pi].translationAnswers[sentence] = value;
+}
+function buildTranslationAnswerFieldsV2(pi){
+  const selected = passages[pi].selectedSents || [];
+  if(!selected.length) return `<div class="empty-note">문장 해석 문제로 낼 문장을 먼저 선택하세요.</div>`;
+  return selected.map((sentence, index) => `
+    <div class="selected-answer-item">
+      <div class="selected-answer-title">${index + 1}. ${htmlEscV2(sentence)}</div>
+      <textarea placeholder="학생이 말해야 할 해석 답안을 적어두세요." oninput="updateTranslationAnswer(${pi}, ${index}, this.value)">${htmlEscV2(passages[pi].translationAnswers[sentence] || '')}</textarea>
+    </div>
+  `).join('');
+}
+function addGrammarRow(pi){
+  passages[pi].grammarRows.push({ point:'', answer:'' });
+  renderSetup();
+}
+function removeGrammarRow(pi, ri){
+  passages[pi].grammarRows.splice(ri, 1);
+  renderSetup();
+}
+function updateGrammarRow(pi, ri, field, value){
+  passages[pi].grammarRows[ri][field] = value;
+}
+function buildGrammarRowsV2(pi){
+  const rows = passages[pi].grammarRows || [];
+  if(!rows.length) return `<div class="empty-note">어법 문제로 낼 포인트와 정답을 미리 적어둘 수 있습니다.</div>`;
+  return rows.map((row, ri) => `
+    <div class="grammar-row">
+      <input type="text" value="${htmlEscV2(row.point)}" placeholder="어법 포인트" oninput="updateGrammarRow(${pi}, ${ri}, 'point', this.value)">
+      <textarea placeholder="설명 또는 정답" oninput="updateGrammarRow(${pi}, ${ri}, 'answer', this.value)">${htmlEscV2(row.answer)}</textarea>
+      <button class="btn btn-ghost btn-sm" onclick="removeGrammarRow(${pi}, ${ri})">삭제</button>
+    </div>
+  `).join('');
+}
+function addVocabRow(pi){
+  passages[pi].vocabRows.push({ word:'', meaning:'', syn:'', ant:'', antMeaning:'' });
+  renderSetup();
+}
+function removeVocabRow(pi, ri){
+  if(!passages[pi]?.vocabRows?.[ri]) return;
+  passages[pi].vocabRows.splice(ri, 1);
+  renderSetup();
+}
+function clearVocabRows(pi){
+  if(!passages[pi]?.vocabRows?.length) return;
+  if(!window.confirm('이 지문의 동의어/반의어 표를 모두 삭제할까요?')) return;
+  passages[pi].vocabRows = [];
+  renderSetup();
+}
+function updateVocab(pi, ri, field, value){
+  passages[pi].vocabRows[ri][field] = value;
+}
+function buildVocabRows(pi){
+  return passages[pi].vocabRows.map((row, ri) => `
+    <tr>
+      <td><input type="text" data-restore-key="passage-${pi}-vocab-${ri}-word" value="${htmlEscV2(row.word)}" placeholder="원형" oninput="updateVocab(${pi}, ${ri}, 'word', this.value)"></td>
+      <td><input type="text" data-restore-key="passage-${pi}-vocab-${ri}-meaning" value="${htmlEscV2(row.meaning)}" placeholder="뜻" oninput="updateVocab(${pi}, ${ri}, 'meaning', this.value)"></td>
+      <td><input type="text" data-restore-key="passage-${pi}-vocab-${ri}-syn" value="${htmlEscV2(row.syn)}" placeholder="동의어" oninput="updateVocab(${pi}, ${ri}, 'syn', this.value)"></td>
+      <td><input type="text" data-restore-key="passage-${pi}-vocab-${ri}-ant" value="${htmlEscV2(row.ant)}" placeholder="반의어" oninput="updateVocab(${pi}, ${ri}, 'ant', this.value)"></td>
+      <td><input type="text" data-restore-key="passage-${pi}-vocab-${ri}-antMeaning" value="${htmlEscV2(row.antMeaning)}" placeholder="반의어 뜻" oninput="updateVocab(${pi}, ${ri}, 'antMeaning', this.value)"></td>
+      <td class="vocab-action-cell"><button class="btn btn-ghost btn-sm" onclick="removeVocabRow(${pi}, ${ri})">행 삭제</button></td>
+    </tr>
+  `).join('');
+}
+</script>
+<script>
+function updateQuestionAnswer(pi, field, value){
+  passages[pi].questionAnswers[field] = value;
+}
+function buildQuestionAnswerFieldsV2(pi){
+  return `
+    <div class="question-answer-grid">
+      ${ROTATION_ANSWER_FIELDS.map(([field, label]) => `
+        <div class="question-answer-item">
+          <div class="mini-label">${label} 답안</div>
+          <textarea data-restore-key="passage-${pi}-qa-${field}" placeholder="${label} 문제의 기준 답안을 적어두세요." oninput="updateQuestionAnswer(${pi}, '${field}', this.value)">${htmlEscV2(passages[pi].questionAnswers[field] || '')}</textarea>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+function handleVocabPaste(pi, event){
+  const text = (event.clipboardData || window.clipboardData)?.getData('text') || '';
+  if(!text.includes('\t')) return;
+  event.preventDefault();
+  text.trim().split(/\r?\n/).forEach(line => {
+    const cols = line.split('\t').map(col => col.trim());
+    if(!cols.some(Boolean)) return;
+    passages[pi].vocabRows.push(normalizeVocabRowV2({
+      word:cols[0] || '',
+      meaning:cols[1] || '',
+      syn:cols[2] || '',
+      ant:cols[3] || '',
+      antMeaning:cols[4] || ''
+    }));
+  });
+  renderSetup();
+}
+function renderSetup(){
+  normalizeAllSetupStateV2();
+  document.getElementById('stu-chips').innerHTML = students
+    .map(name => `<div class="chip">${htmlEscV2(name)}<button class="chip-x" onclick='removeStudent(${JSON.stringify(name)})'>×</button></div>`)
+    .join('');
+
+  document.getElementById('p-stack').innerHTML = passages.map((passage, pi) => `
+    <div class="p-card" id="pcard-${pi}">
+      <div class="p-card-header">
+        <span class="p-card-num">지문 ${pi + 1}</span>
+        <span class="p-card-preview">${htmlEscV2(passage.text.slice(0, 60))}${passage.text.length > 60 ? '...' : ''}</span>
+        <button class="p-card-del" onclick="removePassage(${pi})">×</button>
+      </div>
+      <div class="p-card-body">
+        <div>
+          <div class="mini-label">문장 해석용 문장 선택</div>
+          <div class="sentence-select-area" id="sent-area-${pi}">${buildSentenceHTML(pi)}</div>
+          <div class="selected-count" id="sent-count-${pi}">선택된 문장 ${passage.selectedSents.length}개</div>
+          <div class="selected-answer-list">${buildTranslationAnswerFieldsV2(pi)}</div>
+        </div>
+        <div>
+          <div class="mini-label">어법 포인트 / 정답</div>
+          <div class="grammar-list">${buildGrammarRowsV2(pi)}</div>
+          <div class="vocab-add-row">
+            <button class="btn btn-ghost btn-sm" onclick="addGrammarRow(${pi})">+ 어법 포인트 추가</button>
+          </div>
+        </div>
+        <div>
+          <div class="mini-label">동의어 / 반의어</div>
+          <textarea
+            class="point-textarea"
+            style="min-height:44px;background:rgba(26,95,200,.03);border-color:rgba(26,95,200,.2);margin-bottom:6px;resize:none;"
+            placeholder="원형 / 뜻 / 동의어 / 반의어 / 반의어 뜻 순서의 탭 구분 데이터를 붙여넣을 수 있습니다."
+            rows="2"
+            onpaste="handleVocabPaste(${pi}, event)"
+          ></textarea>
+          <table class="vocab-table">
+            <thead>
+              <tr>
+                <th>원형</th>
+                <th>뜻</th>
+                <th>동의어</th>
+                <th>반의어</th>
+                <th>반의어 뜻</th>
+                <th>관리</th>
+              </tr>
+            </thead>
+            <tbody id="vocab-body-${pi}">${buildVocabRows(pi)}</tbody>
+          </table>
+          <div class="vocab-add-row">
+            <button class="btn btn-ghost btn-sm" onclick="addVocabRow(${pi})">+ 단어 세트 추가</button>
+            <button class="btn btn-ghost btn-sm" onclick="clearVocabRows(${pi})">표 전체 삭제</button>
+          </div>
+        </div>
+        <div>
+          <div class="mini-label">고정 출제 답안</div>
+          <div class="empty-note" style="margin-bottom:8px;">대의 파악은 주제만 출제됩니다.</div>
+          ${buildQuestionAnswerFieldsV2(pi)}
+        </div>
+      </div>
+    </div>
+  `).join('');
+
+  document.querySelectorAll('#p-stack .passage-tab').forEach((button, index) => {
+    const passage = passages[index];
+    const numEl = button.querySelector('.passage-tab-num');
+    const titleEl = button.querySelector('.passage-tab-title');
+    if(!passage || !numEl || !titleEl) return;
+    numEl.textContent = getPassageTabPrimaryLabelV2(passage, index);
+    numEl.className = `passage-tab-num ${hasPassageTitleV2(passage) ? 'named' : 'auto'}`;
+    const secondary = getPassageTabSecondaryLabelV2(passage, index);
+    titleEl.textContent = secondary;
+    titleEl.style.display = secondary ? 'block' : 'none';
+  });
+
+  document.getElementById('stu-count').textContent = students.length;
+  document.getElementById('p-count').textContent = passages.length;
+  renderQuestionConfig();
+}
+function getSetupValidationV2(){
+  normalizeAllSetupStateV2();
+  const issues = [];
+  const ruleSummary = [
+    '주제 1개',
+    getQuestionCount('translate') > 0 ? `해석 ${getQuestionCount('translate')}개` : null,
+    getQuestionCount('vocab') > 0 ? `동의어/반의어 ${getQuestionCount('vocab')}개` : null,
+    getQuestionCount('grammar') > 0 ? `어법 ${getQuestionCount('grammar')}개` : null
+  ].filter(Boolean).join(', ');
+  passages.forEach((passage, index) => {
+    const detail = [];
+    if(getQuestionCount('translate') > passage.selectedSents.length){
+      detail.push(`문장 해석 ${passage.selectedSents.length}개 / 설정 ${getQuestionCount('translate')}개`);
+    }
+    if(getQuestionCount('grammar') > getValidGrammarRowsV2(passage).length){
+      detail.push(`어법 ${getValidGrammarRowsV2(passage).length}개 / 설정 ${getQuestionCount('grammar')}개`);
+    }
+    if(getQuestionCount('vocab') > getValidVocabRowsV2(passage).length){
+      detail.push(`동의어·반의어 ${getValidVocabRowsV2(passage).length}개 / 설정 ${getQuestionCount('vocab')}개`);
+    }
+    if(detail.length) issues.push(`지문 ${index + 1}: ${detail.join(', ')}`);
+  });
+  if(issues.length){
+    return {
+      ok:false,
+      message:`다음 지문에 문제 포인트가 부족합니다.\n\n${issues.map(item => `- ${item}`).join('\n')}\n\n문제 개수나 지문별 입력 내용을 다시 설정해 주세요.`
+    };
+  }
+  return { ok:true };
+}
+function doAssign(){
+  normalizeAllSetupStateV2();
+  if(!students.length){ alert('학생을 1명 이상 추가해 주세요.'); return; }
+  if(!passages.length){ alert('지문을 1개 이상 추가해 주세요.'); return; }
+  const validation = getSetupValidationV2();
+  if(!validation.ok){ alert(validation.message); return; }
+
+  const shuffledStudents = shuffleV2(students);
+  assignments = shuffledStudents.map(student => ({ student, passageIdxs:[] }));
+  shuffleV2([...Array(passages.length).keys()]).forEach((pIdx, order) => {
+    assignments[order % shuffledStudents.length].passageIdxs.push(pIdx);
+  });
+  assignments.forEach(item => item.passageIdxs.sort((a, b) => a - b));
+
+  document.getElementById('assign-grid').innerHTML = assignments.map(item => `
+    <div class="assign-card">
+      <div class="ac-name"><div class="ac-avatar">${htmlEscV2(item.student.charAt(0))}</div>${htmlEscV2(item.student)}</div>
+      <div class="ac-tags">${item.passageIdxs.map(index => `<div class="ac-tag">${htmlEscV2(getPassageShortLabelV2(passages[index], index))}</div>`).join('')}</div>
+    </div>
+  `).join('');
+
+  document.getElementById('setup').style.display = 'none';
+  document.getElementById('assign-screen').style.display = 'block';
+}
+function goBack(){
+  document.getElementById('assign-screen').style.display = 'none';
+  document.getElementById('setup').style.display = 'block';
+}
+</script>
+<script>
+function buildAnswerBlockV2(title, content){
+  return `
+    <div class="selected-answer-item">
+      <div class="mini-label">${title}</div>
+      <div>${content ? htmlEscV2(content).replace(/\n/g, '<br>') : '<span class="empty-note">미리 입력된 답안이 없습니다.</span>'}</div>
+    </div>
+  `;
+}
+function buildAnswerHtmlBlockV2(title, htmlContent){
+  return `
+    <div class="selected-answer-item">
+      <div class="mini-label">${title}</div>
+      <div>${htmlContent || '<span class="empty-note">미리 입력된 답안이 없습니다.</span>'}</div>
+    </div>
+  `;
+}
+function buildQuestionQueueV2(pIdx){
+  const passage = passages[pIdx];
+  const queue = [];
+
+  shuffleV2(passage.selectedSents).slice(0, getQuestionCount('translate')).forEach((sentence, index) => {
+    queue.push({
+      key:`translate-${pIdx}-${index}`,
+      id:'translate',
+      label:'문장 해석',
+      prompt:`다음 문장을 우리말로 해석해 보세요.\n\n"${sentence}"`,
+      answerHtml:buildAnswerBlockV2('문장 해석 답안', passage.translationAnswers[sentence] || ''),
+      sidebarLabel:`문장 해석 ${index + 1}`
+    });
+  });
+
+  const [macroField, macroLabel, macroPrompt] = ROTATION_BIG_PICTURE_FIELDS[0];
+  queue.push({
+    key:`macro-${pIdx}`,
+    id:'macro',
+    label:'대의 파악',
+    prompt:macroPrompt,
+    answerHtml:buildAnswerBlockV2(`${macroLabel} 답안`, passage.questionAnswers[macroField] || ''),
+    sidebarLabel:'대의 파악'
+  });
+
+  [
+    ['overall', '전체 내용 파악', '이 글의 전체 내용을 핵심만 정리해 보세요.']
+  ].forEach(([field, label, prompt]) => {
+    queue.push({
+      key:`${field}-${pIdx}`,
+      id:field,
+      label,
+      prompt,
+      answerHtml:buildAnswerBlockV2(`${label} 답안`, passage.questionAnswers[field] || ''),
+      sidebarLabel:label
+    });
+  });
+
+  shuffleV2(getValidGrammarRowsV2(passage)).slice(0, getQuestionCount('grammar')).forEach((row, index) => {
+    queue.push({
+      key:`grammar-${pIdx}-${index}`,
+      id:'grammar',
+      label:'어법',
+      prompt:`다음 어법 포인트를 설명해 보세요.\n\n"${row.point}"`,
+      answerHtml:`
+        ${buildAnswerBlockV2('어법 포인트', row.point)}
+        ${buildAnswerBlockV2('정답 / 설명', row.answer)}
+      `,
+      sidebarLabel:`어법 ${index + 1}`
+    });
+  });
+
+  shuffleV2(getValidVocabRowsV2(passage)).slice(0, getQuestionCount('vocab')).forEach((row, index) => {
+    const hints = [];
+    if(row.syn) hints.push('동의어 있음');
+    if(row.ant) hints.push('반의어 있음');
+    if(row.antMeaning) hints.push('반의어 뜻 있음');
+    queue.push({
+      key:`vocab-${pIdx}-${index}`,
+      id:'vocab',
+      label:'동의어 / 반의어',
+      prompt:'',
+      display:'vocab',
+      vocabRow:row,
+      vocabPrompt:'해당 단어의 뜻과 동의어, 반의어, 반의어 뜻을 말하세요.',
+      vocabHint:hints.join(' · ') || '뜻 입력 완료',
+      answerHtml:`
+        ${buildAnswerBlockV2('뜻', row.meaning)}
+        ${buildAnswerBlockV2('동의어', row.syn)}
+        ${buildAnswerBlockV2('반의어', row.ant)}
+        ${buildAnswerBlockV2('반의어 뜻', row.antMeaning)}
+      `,
+      sidebarLabel:`어휘 ${index + 1}`
+    });
+  });
+
+  return shuffleV2(queue);
+}
+function startClass(){
+  const validation = getSetupValidationV2();
+  if(!validation.ok){ alert(validation.message); return; }
+  if(!assignments.length){ doAssign(); return; }
+
+  sessionQueue = [];
+  for(let pIdx = 0; pIdx < passages.length; pIdx++){
+    const owner = assignments.find(item => item.passageIdxs.includes(pIdx));
+    if(owner){
+      sessionQueue.push({ student:owner.student, pIdx, questions:buildQuestionQueueV2(pIdx) });
+    }
+  }
+  sessionPos = 0;
+  answeredCount = 0;
+  totalQuestions = sessionQueue.reduce((sum, turn) => sum + turn.questions.length, 0);
+  scoreMap = {};
+  students.forEach(student => { scoreMap[student] = 0; });
+  currentQuestionState = null;
+
+  document.getElementById('assign-screen').style.display = 'none';
+  document.getElementById('class-screen').style.display = 'flex';
+  loadPassageTurn();
+}
+function loadPassageTurn(){
+  if(sessionPos >= sessionQueue.length){ showDone(); return; }
+  const turn = sessionQueue[sessionPos];
+  currentStudent = turn.student;
+  currentPIdx = turn.pIdx;
+  isSubStudent = false;
+  originalStudent = '';
+  queueTypes = turn.questions.map(question => ({ ...question }));
+  doneTypes = [];
+  loadQuestionTurn();
+}
+function loadQuestionTurn(){
+  if(!queueTypes.length){
+    sessionPos += 1;
+    loadPassageTurn();
+    return;
+  }
+  currentQuestionState = {
+    ...queueTypes.shift(),
+    ownerStudent:sessionQueue[sessionPos]?.student || currentStudent,
+    triedStudents:[sessionQueue[sessionPos]?.student || currentStudent].filter(Boolean)
+  };
+  currentQType = currentQuestionState;
+  currentQ = currentQuestionState.prompt || '';
+  currentVocabRow = currentQuestionState.vocabRow || null;
+  isSubStudent = false;
+  originalStudent = '';
+  renderTurn();
+}
+function renderTurn(){
+  if(!currentQuestionState) return;
+  const turn = sessionQueue[sessionPos];
+  const qDone = doneTypes.length;
+  const qTotal = turn.questions.length;
+
+  document.getElementById('stat-p').textContent = getPassageDisplayNameV2(passages[currentPIdx], currentPIdx);
+  document.getElementById('stat-q').textContent = `${qDone + 1}/${qTotal}`;
+  document.getElementById('stat-stu').textContent = currentStudent;
+  document.getElementById('badge-passage').textContent = getPassageDisplayNameV2(passages[currentPIdx], currentPIdx);
+  document.getElementById('badge-qnum').textContent = `질문 ${qDone + 1}/${qTotal}`;
+  document.getElementById('badge-qtype').textContent = currentQuestionState.label;
+
+  document.getElementById('stu-avatar').textContent = currentStudent.charAt(0);
+  document.getElementById('stu-avatar').className = `avatar${isSubStudent ? ' sub-stu' : ''}`;
+  document.getElementById('stu-name').textContent = currentStudent;
+  document.getElementById('sub-badge').style.display = isSubStudent ? 'inline-flex' : 'none';
+
+  const myPassages = assignments.find(item => item.student === (isSubStudent ? originalStudent : currentStudent))?.passageIdxs || [];
+  document.getElementById('stu-meta').textContent = isSubStudent
+    ? `원래 담당 ${originalStudent} 대신 답변 중`
+    : `담당 지문 ${myPassages.map(index => `지문 ${index + 1}`).join(', ')}`;
+
+  document.getElementById('stu-meta').textContent = isSubStudent
+    ? `원래 담당 ${originalStudent} 대신 응답 중`
+    : `담당 지문 ${myPassages.map(index => getPassageDisplayNameV2(passages[index], index)).join(', ')}`;
+
+  const subBanner = document.getElementById('sub-banner');
+  if(isSubStudent){
+    subBanner.className = 'sub-banner show';
+    subBanner.textContent = `${originalStudent} 학생 대신 ${currentStudent} 학생이 이어서 답합니다.`;
+  } else {
+    subBanner.className = 'sub-banner';
+    subBanner.textContent = '';
+  }
+
+  document.getElementById('passage-label').textContent = `현재 지문 ${currentPIdx + 1}`;
+  document.getElementById('passage-label').textContent = `현재 지문 · ${getPassageDisplayNameV2(passages[currentPIdx], currentPIdx)}`;
+  document.getElementById('passage-disp').textContent = passages[currentPIdx].text;
+  document.getElementById('q-answer-box').className = 'inline-answer';
+  document.getElementById('q-answer-disp').innerHTML = '';
+  document.getElementById('vocab-answer-box').className = 'inline-answer';
+  document.getElementById('vocab-answer-disp').innerHTML = '';
+  document.getElementById('answer-card').style.display = 'none';
+  document.getElementById('answer-disp').innerHTML = '';
+
+  if(currentQuestionState.display === 'vocab'){
+    document.getElementById('q-card').style.display = 'none';
+    document.getElementById('vocab-card').style.display = 'block';
+    document.getElementById('vocab-word').textContent = currentQuestionState.vocabRow.word;
+    const vocabPrompt = document.getElementById('vocab-prompt');
+    vocabPrompt.textContent = currentQuestionState.vocabPrompt || '';
+    vocabPrompt.style.display = currentQuestionState.vocabPrompt ? 'block' : 'none';
+    const vocabHint = document.getElementById('vocab-hint');
+    vocabHint.textContent = currentQuestionState.vocabHint || '';
+    vocabHint.style.display = currentQuestionState.vocabHint ? 'block' : 'none';
+  } else {
+    document.getElementById('vocab-card').style.display = 'none';
+    document.getElementById('q-card').style.display = 'block';
+    document.getElementById('q-disp').innerHTML = currentQuestionState.promptHtml || htmlEscV2(currentQuestionState.prompt || '').replace(/\n/g, '<br>');
+  }
+
+  const progress = totalQuestions > 0 ? Math.round((answeredCount / totalQuestions) * 100) : 0;
+  document.getElementById('op-bar').style.width = `${progress}%`;
+  document.getElementById('op-text').textContent = `${answeredCount} / ${totalQuestions} 문항`;
+
+  renderSidebar();
+  const main = document.getElementById('main-area');
+  main.classList.remove('fade-in');
+  void main.offsetWidth;
+  main.classList.add('fade-in');
+}
+function showAnswer(){
+  if(!currentQuestionState) return;
+  const isVocab = currentQuestionState.display === 'vocab';
+  const answerBox = document.getElementById(isVocab ? 'vocab-answer-box' : 'q-answer-box');
+  const answerDisp = document.getElementById(isVocab ? 'vocab-answer-disp' : 'q-answer-disp');
+  answerDisp.innerHTML = currentQuestionState.answerHtml || '<span class="empty-note">미리 입력된 답안이 없습니다.</span>';
+  answerBox.className = 'inline-answer show';
+}
+function assignSubStudentV2(){
+  if(!currentQuestionState) return null;
+  const tried = Array.isArray(currentQuestionState.triedStudents) ? currentQuestionState.triedStudents : [];
+  let candidates = students.filter(student => student !== currentStudent && !tried.includes(student));
+  if(!candidates.length){
+    currentQuestionState.triedStudents = [currentStudent];
+    candidates = students.filter(student => student !== currentStudent);
+  }
+  return candidates.length ? shuffleV2(candidates)[0] : null;
+}
+function finishQuestionV2(){
+  answeredCount += 1;
+  doneTypes.push(currentQuestionState);
+  currentStudent = sessionQueue[sessionPos]?.student || currentStudent;
+  isSubStudent = false;
+  originalStudent = '';
+  currentQuestionState = null;
+  currentVocabRow = null;
+  loadQuestionTurn();
+}
+function judge(correct){
+  if(!currentQuestionState) return;
+  if(correct){
+    scoreMap[currentStudent] = (scoreMap[currentStudent] || 0) + 1;
+    showScoreFeedback(currentStudent);
+    finishQuestionV2();
+    return;
+  }
+  if(!currentQuestionState.triedStudents?.includes(currentStudent)){
+    currentQuestionState.triedStudents = [...(currentQuestionState.triedStudents || []), currentStudent];
+  }
+  const subStudent = assignSubStudentV2();
+  if(!subStudent){
+    finishQuestionV2();
+    return;
+  }
+  originalStudent = currentQuestionState.ownerStudent || currentStudent;
+  currentQuestionState.triedStudents = [...(currentQuestionState.triedStudents || []), subStudent];
+  currentStudent = subStudent;
+  isSubStudent = currentStudent !== originalStudent;
+  renderTurn();
+}
+function skipQ(){
+  if(!currentQuestionState) return;
+  finishQuestionV2();
+}
+function showScoreFeedback(name){
+  const el = document.getElementById('score-feedback');
+  el.textContent = `+1점 ${name} (${scoreMap[name]})`;
+  el.style.opacity = '1';
+  el.style.transform = 'translateY(0)';
+  setTimeout(() => {
+    el.style.opacity = '0';
+    el.style.transform = 'translateY(-8px)';
+  }, 1200);
+}
+function renderSidebar(){
+  const sorted = students.slice().sort((a, b) => (scoreMap[b] || 0) - (scoreMap[a] || 0));
+  document.getElementById('scoreboard').innerHTML = sorted.map((student, index) => {
+    const score = scoreMap[student] || 0;
+    const isCurrent = student === currentStudent;
+    return `
+      <div style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;${isCurrent ? 'background:rgba(200,55,26,.06);' : ''}margin-bottom:3px;">
+        <span style="font-family:'Bebas Neue',sans-serif;font-size:0.9rem;color:var(--muted);width:16px;text-align:center;">${index + 1}</span>
+        <span style="flex:1;font-size:0.82rem;font-weight:${isCurrent ? '700' : '400'};color:${isCurrent ? 'var(--accent)' : 'var(--ink)'};">${htmlEscV2(student)}</span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:0.78rem;font-weight:700;color:${score > 0 ? 'var(--green)' : 'var(--muted)'};">${score}점</span>
+      </div>
+    `;
+  }).join('');
+
+  const donePassages = sessionQueue.slice(0, sessionPos).map(turn => turn.pIdx);
+  document.getElementById('sidebar-assign').innerHTML = assignments.map(item => {
+    const ownerMatch = item.student === sessionQueue[sessionPos]?.student;
+    const activeMatch = item.student === currentStudent || item.student === originalStudent;
+    return `
+      <div class="al-row ${activeMatch ? 'al-active' : ''}">
+        <div class="al-name">${ownerMatch ? '• ' : ''}${htmlEscV2(item.student)}</div>
+        <div class="al-tags">${item.passageIdxs.map(pIdx => {
+          const isCurrent = pIdx === currentPIdx && ownerMatch;
+          const isDone = donePassages.includes(pIdx);
+          return `<span class="al-tag ${isCurrent ? 'current' : isDone ? 'done' : ''}">${htmlEscV2(getPassageShortLabelV2(passages[pIdx], pIdx, 14))}</span>`;
+        }).join('')}</div>
+      </div>
+    `;
+  }).join('');
+
+  const turnQuestions = sessionQueue[sessionPos]?.questions || [];
+  const doneKeys = new Set(doneTypes.map(item => item.key));
+  document.getElementById('qt-list').innerHTML = turnQuestions.map(question => {
+    const done = doneKeys.has(question.key);
+    const current = question.key === currentQuestionState?.key;
+    return `<div class="qt-row ${done ? 'qt-done' : current ? 'qt-active' : 'qt-wait'}">${question.sidebarLabel || question.label}</div>`;
+  }).join('');
+}
+function showDone(){
+  document.getElementById('done-sub').textContent = `배정 지문 ${sessionQueue.length}개, 총 ${totalQuestions}문항을 마쳤습니다.`;
+  const sorted = students.slice().sort((a, b) => (scoreMap[b] || 0) - (scoreMap[a] || 0));
+  const maxScore = scoreMap[sorted[0]] || 0;
+  document.getElementById('final-scoreboard').innerHTML = `
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:2px;color:var(--muted);margin-bottom:12px;text-align:center;">최종 점수</div>
+    ${sorted.map((student, index) => {
+      const score = scoreMap[student] || 0;
+      const isFirst = index === 0 && score > 0;
+      const pct = maxScore > 0 ? Math.round((score / maxScore) * 100) : 0;
+      return `
+        <div style="background:${isFirst ? 'rgba(200,55,26,.08)' : 'var(--card)'};border:1.5px solid ${isFirst ? 'rgba(200,55,26,.4)' : 'var(--border)'};border-radius:10px;padding:12px 16px;margin-bottom:8px;display:flex;align-items:center;gap:12px;">
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:${isFirst ? 'var(--accent)' : 'var(--muted)'};width:28px;text-align:center;">${index + 1}</div>
+          <div style="flex:1;">
+            <div style="font-weight:900;font-size:1rem;">${htmlEscV2(student)}</div>
+            <div style="background:var(--border);border-radius:999px;height:5px;margin-top:5px;overflow:hidden;"><div style="height:100%;width:${pct}%;background:${isFirst ? 'var(--accent)' : 'var(--accent2)'};border-radius:999px;"></div></div>
+          </div>
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;color:${isFirst ? 'var(--accent)' : 'var(--ink)'};">${score}</div>
+        </div>
+      `;
+    }).join('')}
+  `;
+  document.getElementById('done-overlay').classList.add('show');
+}
+function endClass(){
+  document.getElementById('done-overlay').classList.remove('show');
+  document.getElementById('class-screen').style.display = 'none';
+  document.getElementById('assign-screen').style.display = 'none';
+  document.getElementById('setup').style.display = 'block';
+  assignments = [];
+  sessionQueue = [];
+  sessionPos = 0;
+  queueTypes = [];
+  doneTypes = [];
+  currentQuestionState = null;
+  currentVocabRow = null;
+  answeredCount = 0;
+  totalQuestions = 0;
+  scoreMap = {};
+  renderSetup();
+}
+function saveSession(){
+  normalizeAllSetupStateV2();
+  if(!students.length && !passages.length){
+    showToast('저장할 내용이 없습니다.');
+    return;
+  }
+  const data = {
+    version:2,
+    savedAt:new Date().toISOString(),
+    students:[...students],
+    questionCounts:{ ...questionCounts },
+    passages:passages.map(passage => normalizePassageV2(passage))
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type:'application/json' });
+  const url = URL.createObjectURL(blob);
+  const now = new Date();
+  const stamp = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}`;
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `rotation_session_${stamp}.json`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+  showToast(`세션 저장 완료 · 학생 ${students.length}명 / 지문 ${passages.length}개`, 'var(--green)');
+}
+function loadSession(event){
+  const file = event.target.files?.[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try{
+      const data = JSON.parse(e.target.result);
+      if(!Array.isArray(data.students) || !Array.isArray(data.passages)) throw new Error('invalid');
+      students = normalizeStudentsV2(data.students);
+      passages = data.passages.map(normalizePassageV2);
+      questionCounts = normalizeQuestionCountsV2(data.questionCounts || {});
+      assignments = [];
+      sessionQueue = [];
+      sessionPos = 0;
+      answeredCount = 0;
+      totalQuestions = 0;
+      scoreMap = {};
+      currentQuestionState = null;
+      renderSetup();
+      showToast(`세션 불러오기 완료 · 학생 ${students.length}명 / 지문 ${passages.length}개`, 'var(--accent2)');
+    } catch(error){
+      showToast('세션 파일을 읽지 못했습니다. JSON 형식을 확인해 주세요.');
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+// Legacy setup render is intentionally skipped here.
+// The latest setup renderer is initialized in the final script block below.
+</script>
+<script>
+function splitLinesV3(text){
+  return String(text || '').split(/\r?\n/).map(line => line.trim()).filter(Boolean);
+}
+function splitProseSentencesV3(text){
+  const normalized = String(text || '').replace(/\r/g, ' ').replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
+  if(!normalized) return [];
+  const matches = normalized.match(/[^.!?]+(?:[.!?]+["'”’)\]]*|$)/g) || [];
+  return matches.map(sentence => sentence.trim()).filter(Boolean);
+}
+function splitTranslationParagraphV3(text){
+  const normalized = String(text || '').replace(/\r/g, ' ').replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
+  if(!normalized) return [];
+  const byPunctuation = splitProseSentencesV3(normalized);
+  if(byPunctuation.length > 1) return byPunctuation;
+  const byEnding = normalized
+    .split(/(?<=(?:다|요|죠|니다|했다|하였다|된다|였다|았다|었다|한다|싶다|없다|있다))\s+/)
+    .map(sentence => sentence.trim())
+    .filter(Boolean);
+  return byEnding.length > 1 ? byEnding : byPunctuation;
+}
+function getSelectionUnitsFromTextV3(text){
+  const lines = splitLinesV3(text);
+  if(lines.length > 1) return lines;
+  const sentences = splitProseSentencesV3(text);
+  return sentences.length ? sentences : lines;
+}
+function getPassageSelectionUnitsV3(passage){
+  return getSelectionUnitsFromTextV3(passage?.text || '');
+}
+function normalizeNumberListV3(values, max){
+  return [...new Set((Array.isArray(values) ? values : [])
+    .map(value => Number(value))
+    .filter(value => Number.isInteger(value) && value >= 0 && value < max))]
+    .sort((a, b) => a - b);
+}
+function buildLegacyTranslationTextV3(passage, selectionUnits){
+  if(typeof passage.translationText === 'string' && passage.translationText.trim()) return passage.translationText;
+  const map = passage.translationAnswers && typeof passage.translationAnswers === 'object' ? passage.translationAnswers : {};
+  if(!Object.keys(map).length) return '';
+  return selectionUnits.map(line => String(map[line] || '')).join('\n').trim();
+}
+function mapLegacySelectedLinesV3(passage, selectionUnits){
+  if(Array.isArray(passage.selectedLines)) return normalizeNumberListV3(passage.selectedLines, selectionUnits.length);
+  const legacy = Array.isArray(passage.selectedSents) ? passage.selectedSents.map(item => String(item || '').trim()).filter(Boolean) : [];
+  const used = new Set();
+  return legacy.map(sentence => {
+    const index = selectionUnits.findIndex((line, lineIndex) => !used.has(lineIndex) && line === sentence);
+    if(index >= 0) used.add(index);
+    return index;
+  }).filter(index => index >= 0);
+}
+function normalizeGrammarSelectionV3(row = {}){
+  if(typeof row === 'string') return { text:row.trim(), answer:'', lineIndex:-1, context:'' };
+  const parsedIndex = Number(row.lineIndex);
+  return {
+    text:String(row.text || row.point || '').trim(),
+    answer:String(row.answer || '').trim(),
+    lineIndex:Number.isInteger(parsedIndex) ? parsedIndex : -1,
+    context:String(row.context || '').trim()
+  };
+}
+function getPassageLinesV3(passage){
+  return splitLinesV3(passage?.text || '');
+}
+function getTranslationLinesV3(passage){
+  const raw = String(passage?.translationText || '').trim();
+  const lines = splitLinesV3(raw);
+  if(lines.length > 1) return lines;
+  const paragraphUnits = splitTranslationParagraphV3(raw);
+  return paragraphUnits.length ? paragraphUnits : lines;
+}
+function getTranslationForLineV3(passage, lineIndex){
+  return String(getTranslationLinesV3(passage)[lineIndex] || '').trim();
+}
+function escapeRegExpV2(value){
+  return String(value || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+function highlightTextHtmlV2(text, needle){
+  const source = String(text || '');
+  const target = String(needle || '').trim();
+  if(!source) return '<span class="empty-note">해당 문장을 찾지 못했습니다.</span>';
+  if(!target) return htmlEscV2(source);
+  const pattern = new RegExp(escapeRegExpV2(target), 'g');
+  let lastIndex = 0;
+  let matched = false;
+  let result = '';
+  source.replace(pattern, (match, offset) => {
+    matched = true;
+    result += htmlEscV2(source.slice(lastIndex, offset));
+    result += `<span class="grammar-highlight">${htmlEscV2(match)}</span>`;
+    lastIndex = offset + match.length;
+    return match;
+  });
+  result += htmlEscV2(source.slice(lastIndex));
+  return matched ? result : htmlEscV2(source);
+}
+function getGrammarSentenceV2(passage, row){
+  const lineIndex = Number(row?.lineIndex);
+  if(Number.isInteger(lineIndex) && lineIndex >= 0){
+    const line = getPassageLinesV3(passage)[lineIndex] || '';
+    if(line) return line;
+  }
+  return String(row?.context || '').trim();
+}
+function buildQuestionPromptHtmlV2(text, bodyHtml){
+  const parts = [];
+  if(text) parts.push(htmlEscV2(text).replace(/\n/g, '<br>'));
+  if(bodyHtml) parts.push(bodyHtml);
+  return parts.join('<br><br>');
+}
+function getPassageTitleV2(passage){
+  return String(passage?.title || passage?.name || '').trim();
+}
+function getPassageDisplayNameV2(passage, index){
+  return getPassageTitleV2(passage) || `지문 ${index + 1}`;
+}
+function getPassageShortLabelV2(passage, index, max = 18){
+  const label = getPassageDisplayNameV2(passage, index);
+  return label.length > max ? `${label.slice(0, max)}...` : label;
+}
+function hasPassageTitleV2(passage){
+  return !!getPassageTitleV2(passage);
+}
+function getPassageTabPrimaryLabelV2(passage, index){
+  return getPassageDisplayNameV2(passage, index);
+}
+function getPassageTabSecondaryLabelV2(passage, index){
+  const firstLine = getPassageLinesV3(passage)[0] || '';
+  if(!firstLine) return '';
+  const preview = `${firstLine.slice(0, 46)}${firstLine.length > 46 ? '...' : ''}`;
+  return hasPassageTitleV2(passage) ? preview : preview;
+}
+function getPassageTabTitleV2(passage, index){
+  const title = getPassageTitleV2(passage);
+  if(title) return title;
+  const firstLine = getPassageLinesV3(passage)[0] || '';
+  return firstLine ? `${firstLine.slice(0, 46)}${firstLine.length > 46 ? '...' : ''}` : `지문 ${index + 1}`;
+}
+function normalizePassageV2(passage = {}){
+  const text = String(passage.text || '').trim();
+  const selectionUnits = getSelectionUnitsFromTextV3(text);
+  const translationText = String(buildLegacyTranslationTextV3(passage, selectionUnits) || '').trim();
+  const markdownDescriptiveEntries = mergeMarkdownDescriptiveEntriesV2([], passage.markdownDescriptiveEntries || passage.descriptiveEntries || []);
+  const markdownAutoSelect = markdownDescriptiveEntries.length ? passage.markdownAutoSelect !== false : false;
+  const legacySelectedLines = mapLegacySelectedLinesV3(passage, selectionUnits);
+  const markdownSelectedLines = markdownAutoSelect ? resolveMarkdownSelectionIndicesV2(text, markdownDescriptiveEntries, selectionUnits) : [];
+  return {
+    title:getPassageTitleV2(passage),
+    markdownSourceTitle:String(passage.markdownSourceTitle || '').trim(),
+    markdownSectionNumber:String(passage.markdownSectionNumber || '').trim(),
+    markdownDescriptiveEntries,
+    markdownAutoSelect,
+    text,
+    translationText,
+    selectedLines:markdownSelectedLines.length ? markdownSelectedLines : legacySelectedLines,
+    grammarSelections:(Array.isArray(passage.grammarSelections) ? passage.grammarSelections : (passage.grammarRows || passage.grammarPoints || []))
+      .map(normalizeGrammarSelectionV3),
+    vocabRows:(passage.vocabRows || []).map(normalizeVocabRowV2),
+    questionAnswers:createQuestionAnswersV2(passage.questionAnswers || {})
+  };
+}
+function normalizeAllSetupStateV2(){
+  students = normalizeStudentsV2(students);
+  passages = (Array.isArray(passages) ? passages : []).map(normalizePassageV2);
+  questionConfigMode = normalizeQuestionConfigModeV2(questionConfigMode);
+  questionCounts = normalizeQuestionCountsV2(questionCounts);
+  assignmentSettings = normalizeAssignmentSettingsV2(assignmentSettings);
+}
+function extractSentencesV2(text){
+  return splitLinesV3(text);
+}
+function makePassage(text = '', translationText = ''){
+  return normalizePassageV2({ text, translationText });
+}
+function stripFileExtensionV2(fileName = ''){
+  return String(fileName || '').replace(/\.[^.]+$/, '').trim();
+}
+function getMarkdownSourceTitleV2(fileName = ''){
+  return stripFileExtensionV2(fileName)
+    .replace(/\s*출제\s*포인트\s*$/i, '')
+    .replace(/[_]+/g, ' ')
+    .trim();
+}
+function normalizeMarkdownCellTextV2(text = ''){
+  return String(text || '')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/\r/g, '')
+    .trim();
+}
+function normalizeMarkdownRowKeyV2(value = ''){
+  return String(value || '')
+    .replace(/\s+/g, '')
+    .replace(/[^\p{L}\p{N}]/gu, '')
+    .toLowerCase();
+}
+const MARKDOWN_CIRCLED_NUMBER_MAP_V2 = Object.freeze({
+  '①':'1','②':'2','③':'3','④':'4','⑤':'5','⑥':'6','⑦':'7','⑧':'8','⑨':'9','⑩':'10',
+  '⑪':'11','⑫':'12','⑬':'13','⑭':'14','⑮':'15','⑯':'16','⑰':'17','⑱':'18','⑲':'19','⑳':'20'
+});
+function convertMarkdownNumberSymbolsV2(value = ''){
+  return String(value || '')
+    .replace(/[①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳]/g, char => MARKDOWN_CIRCLED_NUMBER_MAP_V2[char] || char)
+    .replace(/\\~/g, '~')
+    .replace(/[～〜]/g, '~');
+}
+function stripMarkdownDecorationV2(value = ''){
+  return String(value || '')
+    .replace(/\*\*/g, '')
+    .replace(/__/g, '')
+    .replace(/`/g, '')
+    .replace(/\\(?=\[)/g, '')
+    .trim();
+}
+function isMarkdownPointEntryStartV2(line = ''){
+  const plain = stripMarkdownDecorationV2(line).trim();
+  if(!plain) return false;
+  return /^(?:\d+\)\s*)?(?:\([★☆]+\)|[★☆]+)/.test(plain);
+}
+function splitMarkdownEntryBlocksV2(text = ''){
+  const lines = normalizeMarkdownCellTextV2(text).split('\n');
+  const blocks = [];
+  let current = [];
+  lines.forEach(line => {
+    const trimmed = String(line || '').trim();
+    if(isMarkdownPointEntryStartV2(line) && current.length){
+      blocks.push(current.join('\n').trim());
+      current = [line];
+      return;
+    }
+    if(!trimmed && !current.length) return;
+    current.push(line);
+  });
+  if(current.length){
+    blocks.push(current.join('\n').trim());
+  }
+  return blocks.filter(Boolean);
+}
+function extractQuotedTextFromLineV2(line = ''){
+  const source = String(line || '').trim();
+  if(!source) return '';
+  const candidates = [];
+  [
+    ['"', '"'],
+    ['“', '”'],
+    ["'", "'"],
+    ['‘', '’']
+  ].forEach(([open, close]) => {
+    const start = source.indexOf(open);
+    const end = source.lastIndexOf(close);
+    if(start >= 0 && end > start){
+      const value = source.slice(start + open.length, end).trim();
+      if(value) candidates.push(value);
+    }
+  });
+  return candidates.sort((a, b) => b.length - a.length)[0] || '';
+}
+function extractLongestQuotedTextV2(block = ''){
+  const values = String(block || '')
+    .split('\n')
+    .map(extractQuotedTextFromLineV2)
+    .filter(value => value && /[A-Za-z]/.test(value));
+  return values.sort((a, b) => b.length - a.length)[0] || '';
+}
+function extractMarkdownSentenceRefFromBlockV2(block = ''){
+  const normalized = stripMarkdownDecorationV2(normalizeMarkdownCellTextV2(block));
+  const firstLine = normalized.split('\n').find(line => line.trim()) || '';
+  const header = convertMarkdownNumberSymbolsV2(firstLine.split(/["“'‘]/, 1)[0]).trim();
+  if(!header) return '';
+  const directMatch = header.match(/문장\s*([0-9\s,~\-\/]+)/i);
+  if(directMatch) return normalizeMarkdownSentenceRefV2(directMatch[1]);
+  const parenMatches = [...header.matchAll(/\(([^)]+)\)/g)]
+    .map(match => convertMarkdownNumberSymbolsV2(match[1]))
+    .filter(value => /[0-9]/.test(value));
+  if(parenMatches.length) return normalizeMarkdownSentenceRefV2(parenMatches[0]);
+  const trailingMatch = header.match(/(?:^|\s)([0-9]+(?:\s*[~\-\/,]\s*[0-9]+)*)\s*$/);
+  if(trailingMatch) return normalizeMarkdownSentenceRefV2(trailingMatch[1]);
+  return '';
+}
+function extractMarkdownPipeCellsV2(line = ''){
+  if(!/^\s*\|.*\|\s*$/.test(String(line || ''))) return [];
+  return String(line || '')
+    .split('|')
+    .slice(1, -1)
+    .map(cell => cell.trim());
+}
+function extractMarkdownVocabTableRowsV2(sectionText = ''){
+  const lines = String(sectionText || '').split(/\r?\n/);
+  const rows = [];
+  let inVocabTable = false;
+  for(const line of lines){
+    const cells = extractMarkdownPipeCellsV2(line);
+    if(!cells.length){
+      if(inVocabTable && rows.length) break;
+      continue;
+    }
+    const normalizedFirst = normalizeMarkdownRowKeyV2(cells[0] || '');
+    const isDivider = cells.every(cell => /^:?-{2,}:?$/.test(cell.replace(/\s+/g, '')));
+    if(!inVocabTable){
+      if(normalizedFirst === '원형' && cells.length >= 5){
+        inVocabTable = true;
+      }
+      continue;
+    }
+    if(isDivider || normalizedFirst === '원형') continue;
+    if(cells.length < 5) continue;
+    rows.push(normalizeVocabRowV2({
+      word:cells[0],
+      meaning:cells[1],
+      syn:cells[2],
+      ant:cells[3],
+      antMeaning:cells[4]
+    }));
+  }
+  return rows.filter(row => row.word);
+}
+function extractMarkdownTableRowsV2(sectionText = ''){
+  const rows = {};
+  String(sectionText || '').split(/\r?\n/).forEach(line => {
+    const match = line.match(/^\|\s*([^|]+?)\s*\|\s*(.*?)\s*\|$/);
+    if(!match) return;
+    const key = match[1].trim();
+    if(!key || key === '항목' || /^-+$/.test(key.replace(/\s/g, ''))) return;
+    rows[key] = match[2].trim();
+  });
+  return rows;
+}
+function getMarkdownRowValueV2(rowMap = {}, aliases = []){
+  const normalizedRows = new Map(
+    Object.entries(rowMap || {}).map(([key, value]) => [normalizeMarkdownRowKeyV2(key), value])
+  );
+  for(const alias of aliases){
+    const hit = normalizedRows.get(normalizeMarkdownRowKeyV2(alias));
+    if(hit) return hit;
+  }
+  return '';
+}
+function extractMarkdownTaggedFieldV2(text = '', tag = ''){
+  const source = stripMarkdownDecorationV2(normalizeMarkdownCellTextV2(text));
+  const match = source.match(new RegExp(`\\\\?\\[${escapeRegExpV2(tag)}\\]\\s*[:：-]?\\s*([\\s\\S]*?)(?=\\n\\s*\\\\?\\[[^\\]]+\\]|$)`));
+  return match ? match[1].trim() : '';
+}
+function extractQuotedMarkdownEntriesV2(text = '', quoteType = 'double'){
+  const source = normalizeMarkdownCellTextV2(text);
+  const pattern = quoteType === 'single'
+    ? /(?:^|\n)\s*(?:\([^)]*\)\s*)*'([^'\n]+)'/g
+    : /(?:^|\n)\s*(?:\([^)]*\)\s*)*"([^"\n]+)"/g;
+  const values = [];
+  let match;
+  while((match = pattern.exec(source))){
+    const value = String(match[1] || '').trim();
+    if(value) values.push(value);
+  }
+  return uniqueStringsV2(values);
+}
+function extractMarkdownVocabWordsV2(text = ''){
+  const source = normalizeMarkdownCellTextV2(text);
+  const values = [];
+  const seen = new Set();
+  const pushValue = value => {
+    const trimmed = String(value || '').trim();
+    if(!trimmed) return;
+    const key = normalizeMatchTextV2(trimmed);
+    if(!key || seen.has(key)) return;
+    seen.add(key);
+    values.push(trimmed);
+  };
+  splitMarkdownEntryBlocksV2(source).forEach(block => {
+    const normalizedBlock = stripMarkdownDecorationV2(block);
+    let value = extractLongestQuotedTextV2(normalizedBlock);
+    if(value && value.split(/\s+/).length > 4) value = '';
+    if(!value){
+      const header = stripMarkdownDecorationV2((normalizedBlock.split('\n').find(line => line.trim()) || ''))
+        .replace(/^(?:\d+\)\s*)?(?:\([★☆]+\)|[★☆]+)\s*/, '')
+        .replace(/\s*\/.*$/, '')
+        .trim();
+      const wordMatch = header.match(/^['"“”‘’]?([A-Za-z][A-Za-z0-9'’\-]*(?:\s+[A-Za-z][A-Za-z0-9'’\-]*)*)['"“”‘’]?\s*(?=(?:\((?:[0-9①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳,\s~\-\/]+)\))|$|[:→])/);
+      if(wordMatch) value = wordMatch[1];
+    }
+    pushValue(value);
+  });
+  if(values.length) return values;
+  const patterns = [
+    /['‘’]([^'‘’\n]+)['‘’]/g,
+    /["“”]([^"“”\n]+)["“”]/g
+  ];
+  patterns.forEach(pattern => {
+    let match;
+    while((match = pattern.exec(source))){
+      pushValue(match[1]);
+    }
+  });
+  return values;
+}
+function normalizeMarkdownSentenceRefV2(value = ''){
+  return convertMarkdownNumberSymbolsV2(String(value || ''))
+    .replace(/[()]/g, '')
+    .replace(/\s+/g, '')
+    .trim();
+}
+function normalizeMarkdownDescriptiveEntryV2(entry = {}){
+  if(typeof entry === 'string'){
+    return { numberRef:'', text:String(entry || '').trim() };
+  }
+  return {
+    numberRef:normalizeMarkdownSentenceRefV2(entry.numberRef || entry.sentenceRef || entry.number || ''),
+    text:String(entry.text || entry.line || '').trim()
+  };
+}
+function extractMarkdownDescriptiveEntriesV2(text = ''){
+  const source = normalizeMarkdownCellTextV2(text);
+  const values = [];
+  const seen = new Set();
+  splitMarkdownEntryBlocksV2(source).forEach(block => {
+    const entry = normalizeMarkdownDescriptiveEntryV2({
+      numberRef:extractMarkdownSentenceRefFromBlockV2(block),
+      text:extractLongestQuotedTextV2(block)
+    });
+    const key = `${entry.numberRef}::${normalizeMatchTextV2(entry.text)}`;
+    if((entry.numberRef || entry.text) && !seen.has(key)){
+      seen.add(key);
+      values.push(entry);
+    }
+  });
+  if(values.length) return values;
+  return extractQuotedMarkdownEntriesV2(source, 'double').map(textValue => normalizeMarkdownDescriptiveEntryV2({ text:textValue }));
+}
+function mergeMarkdownDescriptiveEntriesV2(existingEntries = [], importedEntries = []){
+  const merged = [];
+  const seen = new Set();
+  [...(Array.isArray(existingEntries) ? existingEntries : []), ...(Array.isArray(importedEntries) ? importedEntries : [])]
+    .map(normalizeMarkdownDescriptiveEntryV2)
+    .forEach(entry => {
+      if(!entry.numberRef && !entry.text) return;
+      const key = `${entry.numberRef}::${normalizeMatchTextV2(entry.text)}`;
+      if(seen.has(key)) return;
+      seen.add(key);
+      merged.push(entry);
+    });
+  return merged;
+}
+function parseSentenceNumberRefsV2(numberRef = '', max = 0){
+  const source = normalizeMarkdownSentenceRefV2(numberRef);
+  if(!source) return [];
+  const ranges = source.split(/[\/&]/).map(part => part.trim()).filter(Boolean);
+  const values = [];
+  ranges.forEach(part => {
+    const rangeMatch = part.match(/^(\d+)\s*[~\-]\s*(\d+)$/);
+    if(rangeMatch){
+      const start = Number(rangeMatch[1]);
+      const end = Number(rangeMatch[2]);
+      if(Number.isInteger(start) && Number.isInteger(end)){
+        const [from, to] = start <= end ? [start, end] : [end, start];
+        for(let current = from; current <= to; current += 1){
+          values.push(current - 1);
+        }
+      }
+      return;
+    }
+    part.split(/[,·]/).map(item => item.trim()).filter(Boolean).forEach(item => {
+      const parsed = Number(item);
+      if(Number.isInteger(parsed)) values.push(parsed - 1);
+    });
+  });
+  return normalizeNumberListV3(values, max);
+}
+function parseMarkdownSectionPayloadV2(section = {}, baseTitle = '분석본'){
+  const rowMap = extractMarkdownTableRowsV2(section.content);
+  const topic = extractMarkdownTaggedFieldV2(section.content, '주제')
+    || extractMarkdownTaggedFieldV2(getMarkdownRowValueV2(rowMap, ['핵심 내용 재활용', '핵심 내용 활용', '독해 내용 재활용', '독해 내용 활용', '내용 재활용']) || '', '주제');
+  const descriptiveEntries = extractMarkdownDescriptiveEntriesV2(getMarkdownRowValueV2(rowMap, ['서술형 포인트', '서술형 문항', '서술형']) || '');
+  const descriptiveLines = descriptiveEntries.map(entry => entry.text).filter(Boolean);
+  const vocabRows = mergeImportedVocabRowsV2(
+    extractMarkdownVocabTableRowsV2(section.content),
+    extractMarkdownVocabWordsV2(getMarkdownRowValueV2(rowMap, ['어휘 포인트', '어휘']) || '')
+  );
+  if(!topic && !descriptiveLines.length && !vocabRows.length) return null;
+  return {
+    baseTitle,
+    number:String(section.number || '').trim(),
+    title:`${baseTitle} 지문 ${section.number}`,
+    topic,
+    descriptiveEntries,
+    descriptiveLines,
+    vocabRows
+  };
+}
+function resolveMarkdownSelectionIndicesV2(passageText = '', descriptiveEntries = [], selectionUnits = null){
+  const units = Array.isArray(selectionUnits) ? selectionUnits : getSelectionUnitsFromTextV3(passageText);
+  if(!units.length) return [];
+  const indices = [];
+  (Array.isArray(descriptiveEntries) ? descriptiveEntries : []).map(normalizeMarkdownDescriptiveEntryV2).forEach(entry => {
+    const byNumber = parseSentenceNumberRefsV2(entry.numberRef, units.length);
+    if(byNumber.length){
+      indices.push(...byNumber);
+      return;
+    }
+    if(entry.text){
+      indices.push(...findSelectionIndicesByTextV2(passageText, [entry.text]));
+    }
+  });
+  return normalizeNumberListV3(indices, units.length);
+}
+function splitMarkdownPassageSectionsV2(markdown = ''){
+  const source = String(markdown || '');
+  const matches = [...source.matchAll(/\[\s*지문(?:\s*(\d+))?(?:\s*결과)?\s*\]/g)];
+  if(!matches.length){
+    return [{ number:'1', content:source }];
+  }
+  return matches.map((match, index) => {
+    const start = match.index ?? 0;
+    const end = index + 1 < matches.length ? (matches[index + 1].index ?? source.length) : source.length;
+    return {
+      number:String(match[1] || index + 1),
+      content:source.slice(start, end).trim()
+    };
+  });
+}
+function parseMarkdownPassageDataV2(markdown = '', fileName = ''){
+  const baseTitle = getMarkdownSourceTitleV2(fileName) || '분석본';
+  return splitMarkdownPassageSectionsV2(markdown)
+    .map(section => parseMarkdownSectionPayloadV2(section, baseTitle))
+    .filter(Boolean);
+}
+function buildPassageFromMarkdownSectionV2(section){
+  return normalizePassageV2({
+    title:section.title,
+    markdownSourceTitle:section.baseTitle,
+    markdownSectionNumber:section.number,
+    markdownDescriptiveEntries:section.descriptiveEntries || [],
+    markdownAutoSelect:true,
+    text:section.descriptiveLines.join('\n'),
+    translationText:'',
+    selectedLines:section.descriptiveLines.map((_, index) => index),
+    vocabRows:(section.vocabRows || []).map(normalizeVocabRowV2),
+    questionAnswers:{ topic:section.topic || '' }
+  });
+}
+function parseMarkdownPassageDataV3(markdown = '', fileName = ''){
+  const baseTitle = getMarkdownSourceTitleV2(fileName) || '분석본';
+  const sections = splitMarkdownPassageSectionsV2(markdown);
+  const parsed = [];
+  sections.forEach(section => {
+    const payload = parseMarkdownSectionPayloadV2(section, baseTitle);
+    if(payload) parsed.push(payload);
+  });
+  return parsed;
+}
+function buildPassagesFromMarkdownV2(markdown = '', fileName = ''){
+  return parseMarkdownPassageDataV3(markdown, fileName).map(buildPassageFromMarkdownSectionV2);
+}
+function normalizeMatchTextV2(value = ''){
+  return String(value || '')
+    .replace(/["']/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase();
+}
+function extractPassageSectionNumberV2(value = ''){
+  const match = String(value || '').match(/(?:지문|본문)\s*(\d+)/);
+  return match ? String(Number(match[1])) : '';
+}
+function findSelectionIndicesByTextV2(passageText = '', targetLines = []){
+  const units = getSelectionUnitsFromTextV3(passageText);
+  if(!units.length || !Array.isArray(targetLines) || !targetLines.length) return [];
+  const normalizedUnits = units.map(normalizeMatchTextV2);
+  const used = new Set();
+  const found = [];
+  targetLines.forEach(line => {
+    const normalizedLine = normalizeMatchTextV2(line);
+    if(!normalizedLine) return;
+    let index = normalizedUnits.findIndex((unit, unitIndex) => !used.has(unitIndex) && unit === normalizedLine);
+    if(index < 0){
+      index = normalizedUnits.findIndex((unit, unitIndex) => !used.has(unitIndex) && (unit.includes(normalizedLine) || normalizedLine.includes(unit)));
+    }
+    if(index >= 0){
+      used.add(index);
+      found.push(index);
+    }
+  });
+  return found;
+}
+function mergeImportedVocabRowsV2(existingRows = [], vocabWords = []){
+  const rows = (Array.isArray(existingRows) ? existingRows : []).map(normalizeVocabRowV2);
+  const rowIndexByKey = new Map(
+    rows
+      .map((row, index) => [normalizeMatchTextV2(row.word), index])
+      .filter(([key]) => !!key)
+  );
+  (Array.isArray(vocabWords) ? vocabWords : []).forEach(item => {
+    const imported = typeof item === 'string'
+      ? normalizeVocabRowV2({ word:item })
+      : normalizeVocabRowV2(item);
+    const key = normalizeMatchTextV2(imported.word);
+    if(!key) return;
+    if(rowIndexByKey.has(key)){
+      const existingIndex = rowIndexByKey.get(key);
+      const existing = rows[existingIndex];
+      rows[existingIndex] = normalizeVocabRowV2({
+        word:existing.word || imported.word,
+        meaning:existing.meaning || imported.meaning,
+        syn:existing.syn || imported.syn,
+        ant:existing.ant || imported.ant,
+        antMeaning:existing.antMeaning || imported.antMeaning
+      });
+      return;
+    }
+    rowIndexByKey.set(key, rows.length);
+    rows.push(imported);
+  });
+  return rows;
+}
+function scoreMarkdownSectionMatchV2(passage, section){
+  const sourceTitle = normalizeMatchTextV2(passage?.markdownSourceTitle || '');
+  const sectionNumber = String(passage?.markdownSectionNumber || '').trim();
+  const titleNumber = extractPassageSectionNumberV2(getPassageTitleV2(passage));
+  const selectionMatches = resolveMarkdownSelectionIndicesV2(passage?.text || '', section?.descriptiveEntries || []);
+  let score = 0;
+  if(sourceTitle && sourceTitle === normalizeMatchTextV2(section?.baseTitle || '')) score += 15;
+  if(sectionNumber && sectionNumber === String(section?.number || '').trim()) score += 100;
+  if(titleNumber && titleNumber === String(section?.number || '').trim()) score += 40;
+  if(selectionMatches.length) score += selectionMatches.length * 30;
+  return { score, selectionMatches };
+}
+function mergeMarkdownSectionIntoPassageV2(passage, section, selectionMatches = []){
+  const merged = normalizePassageV2(passage);
+  if(!merged.title) merged.title = section.title;
+  if(!merged.text && section.descriptiveLines.length){
+    merged.text = section.descriptiveLines.join('\n');
+  }
+  merged.markdownDescriptiveEntries = mergeMarkdownDescriptiveEntriesV2(merged.markdownDescriptiveEntries, section.descriptiveEntries);
+  merged.markdownAutoSelect = true;
+  const nextSelectionMatches = selectionMatches.length
+    ? selectionMatches
+    : resolveMarkdownSelectionIndicesV2(merged.text, merged.markdownDescriptiveEntries);
+  if(nextSelectionMatches.length){
+    merged.selectedLines = normalizeNumberListV3(nextSelectionMatches, getSelectionUnitsFromTextV3(merged.text).length);
+  }else if(!passage?.text && section.descriptiveLines.length){
+    merged.selectedLines = section.descriptiveLines.map((_, index) => index);
+  }
+  if(section.topic){
+    merged.questionAnswers = createQuestionAnswersV2({
+      ...(merged.questionAnswers || {}),
+      topic:section.topic
+    });
+  }
+  merged.vocabRows = mergeImportedVocabRowsV2(merged.vocabRows, section.vocabRows || section.vocabWords);
+  merged.markdownSourceTitle = section.baseTitle;
+  merged.markdownSectionNumber = section.number;
+  return normalizePassageV2(merged);
+}
+function matchMarkdownSectionsToPassagesV2(sections = []){
+  const remaining = (Array.isArray(sections) ? sections : []).map(section => ({ ...section }));
+  const matches = [];
+  passages.forEach((passage, passageIndex) => {
+    let best = null;
+    remaining.forEach((section, sectionIndex) => {
+      const scored = scoreMarkdownSectionMatchV2(passage, section);
+      if(scored.score < 30) return;
+      if(!best || scored.score > best.score){
+        best = {
+          passageIndex,
+          sectionIndex,
+          section,
+          score:scored.score,
+          selectionMatches:scored.selectionMatches
+        };
+      }
+    });
+    if(best){
+      matches.push(best);
+      remaining.splice(best.sectionIndex, 1);
+    }
+  });
+  return matches;
+}
+function matchMarkdownSectionsByPassageOrderV2(sections = []){
+  const matches = [];
+  const remaining = [];
+  const usedPassageIndices = new Set();
+  (Array.isArray(sections) ? sections : []).forEach((section, index) => {
+    const explicitNumber = Number(String(section?.number || '').trim());
+    const preferredIndices = [];
+    if(Number.isInteger(explicitNumber) && explicitNumber > 0){
+      preferredIndices.push(explicitNumber - 1);
+    }
+    preferredIndices.push(index);
+    const targetIndex = preferredIndices.find(candidate =>
+      Number.isInteger(candidate)
+      && candidate >= 0
+      && candidate < passages.length
+      && !usedPassageIndices.has(candidate)
+    );
+    if(targetIndex === undefined){
+      remaining.push({ ...section });
+      return;
+    }
+    usedPassageIndices.add(targetIndex);
+    matches.push({
+      passageIndex:targetIndex,
+      sectionIndex:index,
+      section,
+      selectionMatches:resolveMarkdownSelectionIndicesV2(passages[targetIndex]?.text || '', section?.descriptiveEntries || [])
+    });
+  });
+  return { matches, remaining };
+}
+function findBestMarkdownSectionForPassageV2(passage, sections = [], passageIndex = -1){
+  let best = null;
+  (Array.isArray(sections) ? sections : []).forEach((section, sectionIndex) => {
+    const scored = scoreMarkdownSectionMatchV2(passage, section);
+    if(Number.isInteger(passageIndex) && passageIndex >= 0 && String(section?.number || '').trim() === String(passageIndex + 1)){
+      scored.score += 35;
+    }
+    if(scored.score < 20) return;
+    if(!best || scored.score > best.score){
+      best = {
+        sectionIndex,
+        section,
+        score:scored.score,
+        selectionMatches:scored.selectionMatches
+      };
+    }
+  });
+  return best;
+}
+function readFileAsTextV2(file){
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = event => resolve(String(event?.target?.result || ''));
+    reader.onerror = () => reject(new Error('read-failed'));
+    reader.readAsText(file);
+  });
+}
+async function importMarkdownFiles(event){
+  const files = Array.from(event?.target?.files || []);
+  if(!files.length) return;
+  let addedPassages = 0;
+  let matchedPassages = 0;
+  let parsedFiles = 0;
+  const skippedFiles = [];
+  let lastTouchedPassage = -1;
+  for(const file of files){
+    try{
+      const markdown = await readFileAsTextV2(file);
+      const baseTitle = getMarkdownSourceTitleV2(file.name) || '분석본';
+      const parsedSections = [];
+      splitMarkdownPassageSectionsV2(markdown).forEach(section => {
+        const payload = parseMarkdownSectionPayloadV2(section, baseTitle);
+        if(payload) parsedSections.push(payload);
+      });
+      if(!parsedSections.length){
+        skippedFiles.push(file.name);
+        continue;
+      }
+      let sections = parsedSections.map(section => ({ ...section }));
+      const hadExistingPassages = passages.length > 0;
+      const hasMultipleSections = sections.length > 1;
+      if(hadExistingPassages && hasMultipleSections){
+        const ordered = matchMarkdownSectionsByPassageOrderV2(sections);
+        ordered.matches.forEach(match => {
+          passages[match.passageIndex] = mergeMarkdownSectionIntoPassageV2(
+            passages[match.passageIndex],
+            match.section,
+            match.selectionMatches
+          );
+          lastTouchedPassage = match.passageIndex;
+        });
+        matchedPassages += ordered.matches.length;
+        sections = ordered.remaining;
+      }
+      if(hadExistingPassages && !hasMultipleSections && openSetupPassage >= 0 && openSetupPassage < passages.length){
+        const preferredMatch = findBestMarkdownSectionForPassageV2(passages[openSetupPassage], sections, openSetupPassage);
+        if(preferredMatch){
+          passages[openSetupPassage] = mergeMarkdownSectionIntoPassageV2(
+            passages[openSetupPassage],
+            preferredMatch.section,
+            preferredMatch.selectionMatches
+          );
+          sections.splice(preferredMatch.sectionIndex, 1);
+          matchedPassages += 1;
+          lastTouchedPassage = openSetupPassage;
+        }
+      }
+      if(hadExistingPassages && !hasMultipleSections && sections.length){
+        const matches = matchMarkdownSectionsToPassagesV2(sections);
+        matches.forEach(match => {
+          passages[match.passageIndex] = mergeMarkdownSectionIntoPassageV2(
+            passages[match.passageIndex],
+            match.section,
+            match.selectionMatches
+          );
+          lastTouchedPassage = match.passageIndex;
+        });
+        matchedPassages += matches.length;
+      }
+      if((!hadExistingPassages || hasMultipleSections) && sections.length){
+        const importedPassages = sections.map(buildPassageFromMarkdownSectionV2);
+        passages.push(...importedPassages);
+        addedPassages += importedPassages.length;
+        if(importedPassages.length) lastTouchedPassage = passages.length - 1;
+      }
+      parsedFiles += 1;
+    }catch(error){
+      skippedFiles.push(file.name);
+    }
+  }
+  event.target.value = '';
+  if(!addedPassages && !matchedPassages){
+    showToast('분석본 md에서 추가할 지문을 찾지 못했습니다.', 'var(--accent)');
+    return;
+  }
+  openSetupPassage = lastTouchedPassage >= 0 ? lastTouchedPassage : passages.length - 1;
+  renderSetup({ preserveView:false, focusKey:null });
+  const skippedText = skippedFiles.length ? ` · 건너뜀 ${skippedFiles.length}개` : '';
+  const resultBits = [];
+  if(matchedPassages) resultBits.push(`매칭 ${matchedPassages}개`);
+  if(addedPassages) resultBits.push(`추가 ${addedPassages}개`);
+  showToast(`분석본 가져오기 완료 · 파일 ${parsedFiles}개 / ${resultBits.join(' · ')}${skippedText}`, 'var(--green)');
+}
+let openSetupPassage = -1;
+function captureSetupViewState(){
+  const state = {
+    windowScrollX:window.scrollX,
+    windowScrollY:window.scrollY,
+    tabScrollTop:0,
+    editorScrollTop:0,
+    focusKey:'',
+    selectionStart:null,
+    selectionEnd:null
+  };
+  const tabList = document.querySelector('.passage-tab-list');
+  const editorBody = document.querySelector('.passage-editor-body');
+  if(tabList) state.tabScrollTop = tabList.scrollTop;
+  if(editorBody) state.editorScrollTop = editorBody.scrollTop;
+  const active = document.activeElement;
+  if(active && active.dataset && active.dataset.restoreKey){
+    state.focusKey = active.dataset.restoreKey;
+    if(typeof active.selectionStart === 'number') state.selectionStart = active.selectionStart;
+    if(typeof active.selectionEnd === 'number') state.selectionEnd = active.selectionEnd;
+  }
+  return state;
+}
+function restoreSetupViewState(state, options = {}){
+  if(!state) return;
+  const tabList = document.querySelector('.passage-tab-list');
+  const editorBody = document.querySelector('.passage-editor-body');
+  if(tabList) tabList.scrollTop = state.tabScrollTop || 0;
+  if(editorBody) editorBody.scrollTop = state.editorScrollTop || 0;
+  if(options.focusKey !== null){
+    const focusKey = options.focusKey || state.focusKey;
+    if(focusKey){
+      const target = document.querySelector(`[data-restore-key="${focusKey}"]`);
+      if(target){
+        target.focus({ preventScroll:true });
+        if(typeof target.setSelectionRange === 'function' && typeof state.selectionStart === 'number' && typeof state.selectionEnd === 'number'){
+          target.setSelectionRange(state.selectionStart, state.selectionEnd);
+        }
+      }
+    }
+  }
+  if(editorBody) editorBody.scrollTop = state.editorScrollTop || 0;
+  window.scrollTo(state.windowScrollX || 0, state.windowScrollY || 0);
+}
+function addPassage(){
+  const input = document.getElementById('p-input');
+  const translationInput = document.getElementById('p-translation-input');
+  const text = input.value.trim();
+  const translationText = translationInput.value.trim();
+  if(!text) return;
+  passages.push(normalizePassageV2({ text, translationText }));
+  openSetupPassage = passages.length - 1;
+  input.value = '';
+  translationInput.value = '';
+  renderSetup({ preserveView:false, focusKey:null });
+}
+function removePassage(index){
+  passages.splice(index, 1);
+  if(!passages.length) openSetupPassage = -1;
+  else if(openSetupPassage === index) openSetupPassage = Math.min(index, passages.length - 1);
+  else if(openSetupPassage > index) openSetupPassage -= 1;
+  renderSetup({ preserveView:false, focusKey:null });
+}
+function selectSetupPassage(index){
+  openSetupPassage = index;
+  renderSetup({ preserveView:false, focusKey:null });
+}
+function savePassageField(pi, field, value){
+  passages[pi][field] = value;
+  if(field === 'text' && passages[pi].markdownDescriptiveEntries?.length){
+    passages[pi].markdownAutoSelect = true;
+  }
+  passages[pi] = normalizePassageV2(passages[pi]);
+  openSetupPassage = pi;
+  renderSetup();
+}
+function buildSentenceHTML(pi){
+  const passage = passages[pi];
+  return `<div class="line-pick-list">${getPassageSelectionUnitsV3(passage).map((line, lineIndex) => {
+    const selected = (passage.selectedLines || []).includes(lineIndex);
+    const translation = getTranslationForLineV3(passage, lineIndex);
+    return `
+      <div class="line-pick-item${selected ? ' selected' : ''}" onclick="toggleSent(${pi}, ${lineIndex})">
+        <strong>문장 ${lineIndex + 1}</strong>
+        <div class="line-text">${htmlEscV2(line)}</div>
+        ${translation ? `<div class="line-translation">${htmlEscV2(translation)}</div>` : `<div class="line-translation"><span class="empty-note">해석 줄이 비어 있습니다.</span></div>`}
+      </div>
+    `;
+  }).join('')}</div>`;
+}
+function toggleSent(pi, lineIndex){
+  const selected = normalizeNumberListV3(passages[pi].selectedLines, getPassageSelectionUnitsV3(passages[pi]).length);
+  const existing = selected.indexOf(lineIndex);
+  if(existing === -1) selected.push(lineIndex);
+  else selected.splice(existing, 1);
+  passages[pi].markdownAutoSelect = false;
+  passages[pi].selectedLines = selected.sort((a, b) => a - b);
+  renderSetup();
+}
+function getValidSelectedLinesV3(passage){
+  return normalizeNumberListV3(passage.selectedLines, getPassageSelectionUnitsV3(passage).length)
+    .filter(lineIndex => !!getTranslationForLineV3(passage, lineIndex));
+}
+function buildTranslationAnswerFieldsV2(pi){
+  const passage = passages[pi];
+  const selectionUnits = getPassageSelectionUnitsV3(passage);
+  const selectedLines = normalizeNumberListV3(passage.selectedLines, selectionUnits.length);
+  if(!selectedLines.length) return `<div class="empty-note">질문에 넣을 문장을 먼저 선택하세요.</div>`;
+  return selectedLines.map((lineIndex, index) => `
+    <div class="selected-answer-item">
+      <div class="selected-answer-title">${index + 1}. ${htmlEscV2(selectionUnits[lineIndex] || '')}</div>
+      <div class="grammar-context">자동 연결된 해석</div>
+      <div>${getTranslationForLineV3(passage, lineIndex) ? htmlEscV2(getTranslationForLineV3(passage, lineIndex)).replace(/\n/g, '<br>') : '<span class="empty-note">해당 줄의 해석이 없습니다.</span>'}</div>
+    </div>
+  `).join('');
+}
+function updateGrammarRow(pi, ri, field, value){
+  passages[pi].grammarSelections[ri][field] = value;
+}
+function removeGrammarRow(pi, ri){
+  passages[pi].grammarSelections.splice(ri, 1);
+  renderSetup();
+}
+function getValidGrammarRowsV2(passage){
+  return (passage.grammarSelections || []).map(normalizeGrammarSelectionV3).filter(row => row.text && row.answer);
+}
+function buildGrammarSelectionAreaV3(pi){
+  const passage = passages[pi];
+  return `
+    <div class="grammar-select-shell">
+      <div class="grammar-toolbar">
+        <button class="btn btn-ghost btn-sm" onclick="addGrammarSelectionFromSelection(${pi})">+ 드래그한 구간 추가</button>
+        <span class="status-inline">지문 안에서 한 줄의 단어나 구를 드래그한 뒤 추가하세요.</span>
+      </div>
+      <div class="grammar-select-area" id="grammar-select-${pi}">
+        ${getPassageLinesV3(passage).map((line, lineIndex) => `
+          <div class="grammar-select-line" data-line-index="${lineIndex}" data-line-text="${htmlEscV2(line)}">
+            <strong style="display:block;font-size:0.74rem;color:var(--accent);margin-bottom:4px;user-select:none;">줄 ${lineIndex + 1}</strong>
+            ${htmlEscV2(line)}
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+}
+function addGrammarSelectionFromSelection(pi){
+  const container = document.getElementById(`grammar-select-${pi}`);
+  const selection = window.getSelection();
+  if(!container || !selection || !selection.rangeCount || !selection.toString().trim()){
+    alert('지문 안에서 어법 포인트가 들어간 단어나 구를 먼저 드래그해 주세요.');
+    return;
+  }
+  const range = selection.getRangeAt(0);
+  const startNode = range.startContainer.nodeType === Node.TEXT_NODE ? range.startContainer.parentElement : range.startContainer;
+  const endNode = range.endContainer.nodeType === Node.TEXT_NODE ? range.endContainer.parentElement : range.endContainer;
+  if(!container.contains(startNode) || !container.contains(endNode)){
+    alert('지문 카드 안에서 선택한 구간만 어법 포인트로 추가할 수 있습니다.');
+    return;
+  }
+  const startLine = startNode.closest('[data-line-index]');
+  const endLine = endNode.closest('[data-line-index]');
+  if(!startLine || !endLine || startLine.dataset.lineIndex !== endLine.dataset.lineIndex){
+    alert('어법 포인트는 한 줄 안에서만 선택해 주세요.');
+    return;
+  }
+  passages[pi].grammarSelections = passages[pi].grammarSelections || [];
+  passages[pi].grammarSelections.push({
+    text:selection.toString().trim(),
+    answer:'',
+    lineIndex:Number(startLine.dataset.lineIndex),
+    context:startLine.dataset.lineText || ''
+  });
+  selection.removeAllRanges();
+  renderSetup();
+}
+function buildGrammarRowsV2(pi){
+  const rows = passages[pi].grammarSelections || [];
+  if(!rows.length) return `<div class="empty-note">지문 안에서 어법 포인트가 들어간 표현을 드래그해서 추가하세요.</div>`;
+  return rows.map((row, ri) => `
+    <div class="selected-answer-item">
+      <div class="selected-answer-title">${htmlEscV2(row.text)}</div>
+      ${row.context ? `<div class="grammar-context">문맥: ${htmlEscV2(row.context)}</div>` : ''}
+      <textarea data-restore-key="passage-${pi}-grammar-${ri}-answer" placeholder="왜 이 어법이 쓰였는지 설명 또는 정답을 적어두세요." oninput="updateGrammarRow(${pi}, ${ri}, 'answer', this.value)">${htmlEscV2(row.answer || '')}</textarea>
+      <div class="vocab-add-row">
+        <button class="btn btn-ghost btn-sm" onclick="removeGrammarRow(${pi}, ${ri})">삭제</button>
+      </div>
+    </div>
+  `).join('');
+}
+function buildSetupPassageEditorV5(pi){
+  const passage = passages[pi];
+  return `
+    <div class="passage-editor-shell">
+      <div class="passage-editor-head">
+        <div>
+          <div class="passage-editor-title">${htmlEscV2(getPassageDisplayNameV2(passage, pi))}</div>
+          <div class="passage-editor-meta">
+            기본 번호 지문 ${pi + 1} · 원문 ${getPassageLinesV3(passage).length}줄 · 해석 ${getTranslationLinesV3(passage).length}개 · 선택 ${(passage.selectedLines || []).length}문장
+            <br>줄바꿈이 있으면 줄 기준으로, 한 문단이면 문장 기준으로 해석 자동 매칭을 시도합니다. 수정 후 입력창 바깥을 클릭하면 반영됩니다.
+          </div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="removePassage(${pi})">이 지문 삭제</button>
+      </div>
+      <div class="passage-editor-body">
+        <div class="passage-source-grid">
+          <div class="passage-source-card" style="grid-column:1 / -1;">
+            <div class="mini-label">지문 이름</div>
+            <input type="text" data-restore-key="passage-${pi}-title" placeholder="예: 3월 모의고사 28번" onchange="savePassageField(${pi}, 'title', this.value)" value="${htmlEscV2(passage.title || '')}">
+            <div class="status-inline" style="margin-top:8px;">비워두면 지문 번호나 첫 줄 미리보기로 표시됩니다.</div>
+          </div>
+          <div class="passage-source-card">
+            <div class="mini-label">원문</div>
+            <textarea class="passage-source-input" data-restore-key="passage-${pi}-text" onchange="savePassageField(${pi}, 'text', this.value)">${htmlEscV2(passage.text || '')}</textarea>
+          </div>
+          <div class="passage-source-card">
+            <div class="mini-label">해석</div>
+            <textarea class="passage-source-input" data-restore-key="passage-${pi}-translationText" onchange="savePassageField(${pi}, 'translationText', this.value)">${htmlEscV2(passage.translationText || '')}</textarea>
+            <div class="status-inline" style="margin-top:8px;">처음 등록 때 비워둔 해석도 여기서 나중에 추가할 수 있습니다.</div>
+          </div>
+        </div>
+        <div>
+          <div class="mini-label">문장 선택 / 해석 자동 연결</div>
+          ${getPassageSelectionUnitsV3(passage).length !== getTranslationLinesV3(passage).length ? `<div class="status-inline" style="color:var(--accent);margin-bottom:6px;">선택 가능한 영어 문장 수와 해석 분리 수가 다르면 일부 문장은 자동 연결되지 않을 수 있습니다.</div>` : ''}
+          <div class="sentence-select-area" id="sent-area-${pi}">${buildSentenceHTML(pi)}</div>
+          <div class="selected-answer-list">${buildTranslationAnswerFieldsV2(pi)}</div>
+        </div>
+        <div>
+          <div class="mini-label">어법 포인트 선택</div>
+          ${buildGrammarSelectionAreaV3(pi)}
+          <div class="grammar-list" style="margin-top:10px;">${buildGrammarRowsV2(pi)}</div>
+        </div>
+        <div>
+          <div class="mini-label">동의어 / 반의어</div>
+          <textarea
+            class="point-textarea"
+            data-restore-key="passage-${pi}-vocab-paste"
+            style="min-height:44px;background:rgba(26,95,200,.03);border-color:rgba(26,95,200,.2);margin-bottom:6px;resize:none;"
+            placeholder="원형 / 뜻 / 동의어 / 반의어 / 반의어 뜻 순서의 탭 구분 데이터를 붙여넣을 수 있습니다."
+            rows="2"
+            onpaste="handleVocabPaste(${pi}, event)"
+          ></textarea>
+          <table class="vocab-table">
+            <thead>
+              <tr>
+                <th>원형</th>
+                <th>뜻</th>
+                <th>동의어</th>
+                <th>반의어</th>
+                <th>반의어 뜻</th>
+                <th>관리</th>
+              </tr>
+            </thead>
+            <tbody id="vocab-body-${pi}">${buildVocabRows(pi)}</tbody>
+          </table>
+          <div class="vocab-add-row">
+            <button class="btn btn-ghost btn-sm" onclick="addVocabRow(${pi})">+ 단어 세트 추가</button>
+            <button class="btn btn-ghost btn-sm" onclick="clearVocabRows(${pi})">표 전체 삭제</button>
+          </div>
+        </div>
+        <div>
+          <div class="mini-label">고정 출제 답안</div>
+          <div class="empty-note" style="margin-bottom:8px;">대의 파악은 주제만 출제됩니다.</div>
+          ${buildQuestionAnswerFieldsV2(pi)}
+        </div>
+      </div>
+    </div>
+  `;
+}
+function renderSetup(){
+  normalizeAllSetupStateV2();
+  if(passages.length && (openSetupPassage < 0 || openSetupPassage >= passages.length)) openSetupPassage = 0;
+  if(!passages.length) openSetupPassage = -1;
+  document.getElementById('stu-chips').innerHTML = students
+    .map(name => `<div class="chip">${htmlEscV2(name)}<button class="chip-x" onclick='removeStudent(${JSON.stringify(name)})'>×</button></div>`)
+    .join('');
+
+  document.getElementById('p-stack').innerHTML = passages.length ? `
+    <div class="passage-workspace">
+      <div class="passage-tab-list">
+        ${passages.map((passage, pi) => `
+          <button class="passage-tab ${openSetupPassage === pi ? 'active' : ''}" onclick="selectSetupPassage(${pi})">
+            <span class="passage-tab-num">지문 ${pi + 1}</span>
+            <span class="passage-tab-title">${htmlEscV2(getPassageTabTitleV2(passage, pi))}</span>
+            <span class="passage-tab-meta">원문 ${getPassageLinesV3(passage).length}줄 · 해석 ${getTranslationLinesV3(passage).length}줄</span>
+          </button>
+        `).join('')}
+      </div>
+      ${buildSetupPassageEditorV5(openSetupPassage)}
+    </div>
+  ` : `<div class="passage-empty">지문을 추가하면 왼쪽 탭에서 지문을 고르고, 오른쪽에서 해석과 문제를 계속 편집할 수 있습니다.</div>`;
+
+  document.getElementById('stu-count').textContent = students.length;
+  document.getElementById('p-count').textContent = passages.length;
+  renderQuestionConfig();
+}
+const renderSetupBaseV2 = renderSetup;
+renderSetup = function(options = {}){
+  const preserveView = options.preserveView !== false;
+  const focusKey = Object.prototype.hasOwnProperty.call(options, 'focusKey') ? options.focusKey : undefined;
+  const viewState = preserveView ? captureSetupViewState() : null;
+  renderSetupBaseV2();
+  document.querySelectorAll('#p-stack .passage-tab').forEach((button, index) => {
+    const passage = passages[index];
+    const numEl = button.querySelector('.passage-tab-num');
+    const titleEl = button.querySelector('.passage-tab-title');
+    if(!passage || !numEl || !titleEl) return;
+    numEl.textContent = getPassageTabPrimaryLabelV2(passage, index);
+    numEl.className = `passage-tab-num ${hasPassageTitleV2(passage) ? 'named' : 'auto'}`;
+    const secondary = getPassageTabSecondaryLabelV2(passage, index);
+    titleEl.textContent = secondary;
+    titleEl.style.display = secondary ? 'block' : 'none';
+  });
+  if(viewState){
+    requestAnimationFrame(() => {
+      restoreSetupViewState(viewState, { focusKey });
+      requestAnimationFrame(() => restoreSetupViewState(viewState, { focusKey }));
+    });
+  }
+};
+function buildQuestionQueueV2(pIdx){
+  const passage = passages[pIdx];
+  const queue = [];
+
+  const [macroField, macroLabel, macroPrompt] = ROTATION_BIG_PICTURE_FIELDS[0];
+  queue.push({
+    key:`macro-${pIdx}`,
+    id:'macro',
+    label:'주제',
+    prompt:macroPrompt,
+    promptHtml:buildQuestionPromptHtmlV2(macroPrompt, ''),
+    answerHtml:buildAnswerBlockV2(`${macroLabel} 답안`, passage.questionAnswers[macroField] || ''),
+    sidebarLabel:'주제'
+  });
+
+  shuffleV2(getValidSelectedLinesV3(passage)).slice(0, getQuestionCount('translate')).forEach((lineIndex, index) => {
+    const line = getPassageSelectionUnitsV3(passage)[lineIndex] || '';
+    queue.push({
+      key:`translate-${pIdx}-${index}`,
+      id:'translate',
+      label:'문장 해석',
+      prompt:`다음 문장을 우리말로 해석해 보세요.\n\n${line}`,
+      promptHtml:buildQuestionPromptHtmlV2('다음 문장을 우리말로 해석해 보세요.', htmlEscV2(line)),
+      answerHtml:buildAnswerBlockV2('문장 해석 답안', getTranslationForLineV3(passage, lineIndex)),
+      sidebarLabel:`문장 해석 ${index + 1}`
+    });
+  });
+
+  shuffleV2(getValidVocabRowsV2(passage)).slice(0, getQuestionCount('vocab')).forEach((row, index) => {
+    queue.push({
+      key:`vocab-${pIdx}-${index}`,
+      id:'vocab',
+      label:'동의어 / 반의어',
+      prompt:'',
+      display:'vocab',
+      vocabRow:row,
+      vocabPrompt:'원형을 보고 뜻과 동의어, 반의어, 반의어 뜻을 말해 보세요.',
+      vocabHint:'',
+      answerHtml:`
+        ${buildAnswerBlockV2('뜻', row.meaning)}
+        ${buildAnswerBlockV2('동의어', row.syn)}
+        ${buildAnswerBlockV2('반의어', row.ant)}
+        ${buildAnswerBlockV2('반의어 뜻', row.antMeaning)}
+      `,
+      sidebarLabel:`어휘 ${index + 1}`
+    });
+  });
+
+  shuffleV2(getValidGrammarRowsV2(passage)).slice(0, getQuestionCount('grammar')).forEach((row, index) => {
+    const grammarSentence = getGrammarSentenceV2(passage, row);
+    const grammarSentenceHtml = highlightTextHtmlV2(grammarSentence || row.text, row.text);
+    queue.push({
+      key:`grammar-${pIdx}-${index}`,
+      id:'grammar',
+      label:'어법',
+      prompt:`다음 표현이 왜 이런 어법으로 쓰였는지 설명해 보세요.\n\n${grammarSentence || row.text}`,
+      promptHtml:buildQuestionPromptHtmlV2('다음 표현이 왜 이런 어법으로 쓰였는지 설명해 보세요.', grammarSentenceHtml),
+      answerHtml:`
+        ${buildAnswerHtmlBlockV2('해당 문장', grammarSentenceHtml)}
+        ${buildAnswerBlockV2('정답 / 설명', row.answer)}
+      `,
+      sidebarLabel:`어법 ${index + 1}`
+    });
+  });
+
+  return queue;
+}
+function updateQuestionConfigModeV2(value){
+  questionConfigMode = normalizeQuestionConfigModeV2(value);
+  renderQuestionConfig();
+}
+function updateAssignmentModeV2(value){
+  assignmentSettings = normalizeAssignmentSettingsV2({
+    ...assignmentSettings,
+    mode:value
+  });
+  renderQuestionConfig();
+}
+function updateAssignmentPassageCountV2(value){
+  assignmentSettings = normalizeAssignmentSettingsV2({
+    ...assignmentSettings,
+    mode:'multi',
+    passagesPerStudent:value
+  });
+  renderQuestionConfig();
+}
+function renderQuestionConfig(){
+  questionConfigMode = normalizeQuestionConfigModeV2(questionConfigMode);
+  questionCounts = normalizeQuestionCountsV2(questionCounts);
+  assignmentSettings = normalizeAssignmentSettingsV2(assignmentSettings);
+  const isFixedMode = questionConfigMode === ROTATION_QUESTION_CONFIG_MODES.fixed;
+  const items = [
+    { id:'topic', label:'주제', hint:'지문당 1문제 고정', count:1, configurable:false },
+    ...ROTATION_CONFIG_TYPES.map(type => ({ ...type, count:getQuestionCount(type.id), configurable:true }))
+  ].map(type => `
+    <div class="question-config-item">
+      <div class="question-config-head">
+        <div>
+          <div class="question-config-name">${type.label}</div>
+          <div class="question-config-hint">${type.hint}</div>
+        </div>
+        <div class="question-count-badge">${type.count}</div>
+      </div>
+      ${type.configurable && !isFixedMode ? `<input type="number" min="0" value="${type.count}" onchange="updateQuestionCount('${type.id}', this.value)">` : ''}
+    </div>
+  `).join('');
+  const perPassage = getQuestionsPerPassageTotalV2();
+  const total = perPassage * passages.length;
+  const passagesPerStudent = getPassagesPerStudentTargetV2();
+  document.getElementById('question-config').innerHTML = `
+    <div class="config-stack">
+      <div class="config-block">
+        <div class="question-config-name">출제 구성 모드</div>
+        <div class="config-toggle-row">
+          <label class="config-toggle${isFixedMode ? ' active' : ''}">
+            <input type="radio" name="question-config-mode" value="fixed" ${isFixedMode ? 'checked' : ''} onchange="updateQuestionConfigModeV2(this.value)">
+            <span>고정 구성</span>
+          </label>
+          <label class="config-toggle${!isFixedMode ? ' active' : ''}">
+            <input type="radio" name="question-config-mode" value="selective" ${!isFixedMode ? 'checked' : ''} onchange="updateQuestionConfigModeV2(this.value)">
+            <span>선택 구성</span>
+          </label>
+        </div>
+        <div class="config-meta-note">
+          ${isFixedMode
+            ? '고정 구성은 주제 1문제, 해석 2문제, 동의어/반의어 2문제, 어법 2문제로 자동 적용됩니다.'
+            : '선택 구성에서는 해석, 동의어/반의어, 어법 문제 수를 직접 정할 수 있습니다. 주제는 항상 1문제로 고정입니다.'}
+        </div>
+        <div class="question-config-grid" style="margin-top:12px;">${items}</div>
+      </div>
+      <div class="config-block">
+        <div class="question-config-name">학생당 지문 배정</div>
+        <div class="config-toggle-row">
+          <label class="config-toggle${assignmentSettings.mode === 'single' ? ' active' : ''}">
+            <input type="radio" name="assignment-mode" value="single" ${assignmentSettings.mode === 'single' ? 'checked' : ''} onchange="updateAssignmentModeV2(this.value)">
+            <span>1지문씩 배정</span>
+          </label>
+          <label class="config-toggle${assignmentSettings.mode === 'multi' ? ' active' : ''}">
+            <input type="radio" name="assignment-mode" value="multi" ${assignmentSettings.mode === 'multi' ? 'checked' : ''} onchange="updateAssignmentModeV2(this.value)">
+            <span>여러 지문 배정</span>
+          </label>
+        </div>
+        ${assignmentSettings.mode === 'multi' ? `
+          <div class="config-mini-form">
+            <span class="question-config-hint">학생당 최대 지문 수</span>
+            <input class="config-mini-input" type="number" min="2" value="${assignmentSettings.passagesPerStudent}" onchange="updateAssignmentPassageCountV2(this.value)">
+          </div>
+        ` : ''}
+        <div class="config-meta-note">
+          ${assignmentSettings.mode === 'multi'
+            ? `랜덤 배정 시 학생당 최대 ${assignmentSettings.passagesPerStudent}지문까지 돌아가며 배정합니다. 지문이 부족하면 일부 학생은 마지막 라운드 지문을 덜 받습니다.`
+            : '랜덤 배정 시 학생 수만큼만 지문을 뽑아 1명당 1지문만 배정합니다.'}
+        </div>
+      </div>
+      <div class="question-config-summary">
+        현재 설정: 지문당 <b>${perPassage}</b>문항${passages.length ? ` · 전체 예상 <b>${total}</b>문항` : ''} · 학생당 최대 <b>${passagesPerStudent}</b>지문
+      </div>
+    </div>
+  `;
+}
+function getSetupValidationV2(){
+  normalizeAllSetupStateV2();
+  const issues = [];
+  passages.forEach((passage, index) => {
+    const detail = [];
+    if(getQuestionCount('translate') > 0 && getPassageLinesV3(passage).length !== getTranslationLinesV3(passage).length){
+      detail.push(`\uBCF8\uBB38 ${getPassageLinesV3(passage).length}\uC904 / \uD574\uC11D ${getTranslationLinesV3(passage).length}\uC904`);
+    }
+    if(getValidSelectedLinesV3(passage).length < getQuestionCount('translate')){
+      detail.push(`\uD574\uC11D ${getValidSelectedLinesV3(passage).length}\uAC1C / \uCD5C\uC18C ${getQuestionCount('translate')}\uAC1C \uD544\uC694`);
+    }
+    if(getValidGrammarRowsV2(passage).length < getQuestionCount('grammar')){
+      detail.push(`\uC5B4\uBC95 ${getValidGrammarRowsV2(passage).length}\uAC1C / \uCD5C\uC18C ${getQuestionCount('grammar')}\uAC1C \uD544\uC694`);
+    }
+    if(getValidVocabRowsV2(passage).length < getQuestionCount('vocab')){
+      detail.push(`\uB3D9\uC758\uC5B4\u00B7\uBC18\uC758\uC5B4 ${getValidVocabRowsV2(passage).length}\uAC1C / \uCD5C\uC18C ${getQuestionCount('vocab')}\uAC1C \uD544\uC694`);
+    }
+    if(!String(passage?.questionAnswers?.topic || '').trim()){
+      detail.push('\uC8FC\uC81C \uB2F5\uC548 \uC785\uB825 \uD544\uC694');
+    }
+    if(detail.length) issues.push(`\uC9C0\uBB38 ${index + 1}: ${detail.join(', ')}`);
+  });
+  if(issues.length){
+    return {
+      ok:false,
+      message:`현재 출제 구성에 맞는 문제 수가 부족한 지문이 있습니다.\n\n${issues.map(item => `- ${item}`).join('\n')}\n\n각 지문마다 ${ruleSummary} 이상이 되도록 입력한 뒤 다시 시작해 주세요.`
+    };
+  }
+  return { ok:true };
+}
+function doAssign(){
+  normalizeAllSetupStateV2();
+  if(!students.length){ alert('\uD559\uC0DD\uC744 1\uBA85 \uC774\uC0C1 \uCD94\uAC00\uD574 \uC8FC\uC138\uC694.'); return; }
+  if(!passages.length){ alert('\uC9C0\uBB38\uC744 1\uAC1C \uC774\uC0C1 \uCD94\uAC00\uD574 \uC8FC\uC138\uC694.'); return; }
+  const validation = getSetupValidationV2();
+  if(!validation.ok){ alert(validation.message); return; }
+
+  buildRandomAssignmentsV2();
+
+  renderAssignmentCardsV2();
+
+  document.getElementById('assign-screen').style.display = 'block';
+  document.getElementById('setup').style.display = 'none';
+}
+function buildStudentTurnsV2(assignment){
+  if(!assignment) return [];
+  return normalizeAssignmentPassageIndicesV2(assignment.passageIdxs).flatMap(pIdx => {
+    const questions = buildQuestionQueueV2(pIdx);
+    if(!questions.length) return [];
+    return [{
+      student:assignment.student,
+      pIdx,
+      questions
+    }];
+  });
+}
+function startClass(){
+  const validation = getSetupValidationV2();
+  if(!validation.ok){ alert(validation.message); return; }
+  if(!assignments.length){ doAssign(); return; }
+
+  sessionQueue = assignments.flatMap(buildStudentTurnsV2);
+  totalQuestions = sessionQueue.reduce((sum, turn) => sum + turn.questions.length, 0);
+  if(!totalQuestions){
+    alert('\uCD9C\uC81C \uAC00\uB2A5\uD55C \uC9C8\uBB38\uC774 \uC5C6\uC2B5\uB2C8\uB2E4.');
+    return;
+  }
+
+  sessionPos = 0;
+  answeredCount = 0;
+  scoreMap = {};
+  students.forEach(student => { scoreMap[student] = 0; });
+  currentQuestionState = null;
+
+  document.getElementById('assign-screen').style.display = 'none';
+  document.getElementById('class-screen').style.display = 'flex';
+  loadPassageTurn();
+}
+function saveSession(){
+  normalizeAllSetupStateV2();
+  if(!students.length && !passages.length){
+    showToast('저장할 내용이 없습니다.');
+    return;
+  }
+  const data = {
+    version:3,
+    savedAt:new Date().toISOString(),
+    students:[...students],
+    questionConfigMode,
+    questionCounts:{ ...questionCounts },
+    assignmentSettings:{ ...assignmentSettings },
+    passages:passages.map(passage => {
+      const normalized = normalizePassageV2(passage);
+      const selectionUnits = getPassageSelectionUnitsV3(normalized);
+      const selectedSents = normalizeNumberListV3(normalized.selectedLines, selectionUnits.length).map(index => selectionUnits[index]).filter(Boolean);
+      const translationAnswers = {};
+      normalizeNumberListV3(normalized.selectedLines, selectionUnits.length).forEach(index => {
+        if(selectionUnits[index]) translationAnswers[selectionUnits[index]] = getTranslationForLineV3(normalized, index);
+      });
+      return {
+        ...normalized,
+        selectedSents,
+        translationAnswers,
+        grammarRows:(normalized.grammarSelections || []).map(row => ({
+          point:row.text,
+          answer:row.answer,
+          lineIndex:row.lineIndex,
+          context:row.context
+        }))
+      };
+    })
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type:'application/json' });
+  const url = URL.createObjectURL(blob);
+  const now = new Date();
+  const stamp = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}`;
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `rotation_session_${stamp}.json`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+  showToast(`세션 저장 완료 · 학생 ${students.length}명 / 지문 ${passages.length}개`, 'var(--green)');
+}
+function loadSession(event){
+  const file = event.target.files?.[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try{
+      const data = JSON.parse(e.target.result);
+      if(!Array.isArray(data.students) || !Array.isArray(data.passages)) throw new Error('invalid');
+      students = normalizeStudentsV2(data.students);
+      passages = data.passages.map(normalizePassageV2);
+      questionConfigMode = normalizeQuestionConfigModeV2(data.questionConfigMode);
+      questionCounts = normalizeQuestionCountsV2(data.questionCounts || {});
+      assignmentSettings = normalizeAssignmentSettingsV2(data.assignmentSettings || {});
+      assignments = [];
+      sessionQueue = [];
+      sessionPos = 0;
+      answeredCount = 0;
+      totalQuestions = 0;
+      scoreMap = {};
+      currentQuestionState = null;
+      renderSetup();
+      showToast(`세션 불러오기 완료 · 학생 ${students.length}명 / 지문 ${passages.length}개`, 'var(--accent2)');
+    } catch(error){
+      showToast('세션 파일을 읽지 못했습니다. JSON 형식을 확인해 주세요.');
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+normalizeAllSetupStateV2();
+renderSetup();
+</script>
+</body>
+</html>
