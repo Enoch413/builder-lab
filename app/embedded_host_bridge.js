@@ -42,7 +42,7 @@ html.${embedClass} #class-screen{
 `;
 
   const style = document.createElement("style");
-  style.textContent = baseCss + (pageName === "rotation_set_builder.html" ? rotationSetCss : "");
+  style.textContent = baseCss + (pageName === "prep_set_builder.html" ? rotationSetCss : "");
   document.head.appendChild(style);
 
   const applyBodyClass = () => {
