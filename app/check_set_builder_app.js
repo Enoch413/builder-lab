@@ -757,18 +757,18 @@ function applyProblemTypeMatches(result){
   result.numbered.forEach(function(type, number){
     const question = hasExistingConfiguredEntries
       ? findQuestionByNumber(number)
-      : ensureQuestionByNumber(number, '객관식')
+      : ensureQuestionByNumber(number, getAutoQuestionTypeFromProblemType(type))
     if(!question) return
     if(!hasExistingConfiguredEntries && !question._existing) createdCount += 1
     delete question._existing
-    question.problemType = type
+    applyImportedProblemTypeToQuestion(question, type)
     appliedCount += 1
   })
 
   if(!hasExistingConfiguredEntries && result.ordered.length){
     const startNumber = normalizeQuestionNumber(checkSetState.startNumber, 1)
     for(let index = 0; index < result.ordered.length; index += 1){
-      const question = ensureQuestionByNumber(startNumber + index, '객관식')
+      const question = ensureQuestionByNumber(startNumber + index, getAutoQuestionTypeFromProblemType(result.ordered[index]))
       if(!question._existing) createdCount += 1
       delete question._existing
     }
@@ -787,7 +787,7 @@ function applyProblemTypeMatches(result){
     result.ordered.forEach(function(type, index){
       const question = availableQuestions[index]
       if(!question) return
-      question.problemType = type
+      applyImportedProblemTypeToQuestion(question, type)
       appliedCount += 1
     })
   }
@@ -848,6 +848,15 @@ function updateSetStatus(message){
   return message
 }
 
+function applyImportedProblemTypeToQuestion(question, type){
+  const normalizedType = normalizeProblemType(type)
+  question.problemType = normalizedType
+  if(isSubjectiveProblemType(normalizedType)){
+    question.type = '주관식'
+    question.answer = normalizeStoredAnswer(question.answer, question.type)
+  }
+}
+
 function normalizeQuestionType(value){
   return String(value || '').trim() === '주관식' ? '주관식' : '객관식'
 }
@@ -856,6 +865,19 @@ function normalizeProblemType(value){
   const direct = String(value || '').trim()
   const token = normalizeProblemTypeToken(direct)
   return CHECK_PROBLEM_TYPE_ALIAS_MAP.get(token) || (CHECK_PROBLEM_TYPES.includes(direct) ? direct : '기타')
+}
+
+function getAutoQuestionTypeFromProblemType(problemType){
+  return isSubjectiveProblemType(problemType) ? '주관식' : '객관식'
+}
+
+function isSubjectiveProblemType(problemType){
+  const normalizedType = normalizeProblemType(problemType)
+  if(!normalizedType || normalizedType === '기타') return false
+  return normalizedType === '주관식'
+    || normalizedType === '영작'
+    || normalizedType === '기타주관식'
+    || normalizedType.indexOf('(주관식)') !== -1
 }
 
 function normalizeProblemTypeToken(value){
