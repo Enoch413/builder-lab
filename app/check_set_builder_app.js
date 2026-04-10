@@ -64,8 +64,6 @@ let checkSetIdTouched = false
 
 const loadSetBtn = document.getElementById('load-set-btn')
 const setFileInput = document.getElementById('set-file-input')
-const addQuestionBtn = document.getElementById('add-question-btn')
-const addQuestionBtnBottom = document.getElementById('add-question-btn-bottom')
 const downloadSetBtn = document.getElementById('download-set-btn')
 const generateQuestionsBtn = document.getElementById('generate-questions-btn')
 const answerTextInput = document.getElementById('answer-text-input')
@@ -80,7 +78,6 @@ const questionStartNumberInput = document.getElementById('question-start-number'
 const setTitleInput = document.getElementById('set-title')
 const setIdInput = document.getElementById('set-id')
 const setDescriptionInput = document.getElementById('set-description')
-const setStatus = document.getElementById('set-status')
 const questionSummary = document.getElementById('question-summary')
 const questionList = document.getElementById('question-list')
 const downloadFileName = document.getElementById('download-file-name')
@@ -89,12 +86,6 @@ loadSetBtn.addEventListener('click', function(){
   setFileInput.click()
 })
 setFileInput.addEventListener('change', handleSetFileLoad)
-addQuestionBtn.addEventListener('click', function(){
-  addQuestion()
-})
-addQuestionBtnBottom.addEventListener('click', function(){
-  addQuestion()
-})
 downloadSetBtn.addEventListener('click', downloadCurrentSet)
 generateQuestionsBtn.addEventListener('click', generateQuestionsByCount)
 applyAnswerTextBtn.addEventListener('click', applyAnswerTextImport)
@@ -138,7 +129,7 @@ function createEmptyCheckSet(){
     title: '',
     description: '',
     startNumber: 1,
-    questions: [createQuestionState(0)]
+    questions: []
   }
 }
 
@@ -191,7 +182,7 @@ function updateCheckSetSummary(){
 
 function renderQuestions(){
   if(!checkSetState.questions.length){
-    questionList.innerHTML = '<div class="empty">아직 문항이 없습니다.<br>문항 추가 버튼을 눌러 첫 문항을 만들어 주세요.</div>'
+    questionList.innerHTML = '<div class="empty">왼쪽에서 문항 자동 생성이나 기존 세트 불러오기를 실행하면 여기서 바로 편집할 수 있습니다.</div>'
     return
   }
 
@@ -320,13 +311,6 @@ function onQuestionFieldInput(event){
   }
 
   question[fieldName] = event.target.value
-}
-
-function addQuestion(source){
-  const nextNumber = getNextQuestionNumber()
-  const nextSource = Object.assign({}, source || {}, { number: source && source.number ? source.number : nextNumber })
-  checkSetState.questions.push(createQuestionState(checkSetState.questions.length, nextSource))
-  renderCheckSetBuilder()
 }
 
 function swapQuestions(sourceIndex, targetIndex){
@@ -861,7 +845,7 @@ function setProblemTypeImportStatus(message, isError){
 }
 
 function updateSetStatus(message){
-  setStatus.innerHTML = '<strong>상태:</strong> ' + escapeHtml(message)
+  return message
 }
 
 function normalizeQuestionType(value){
@@ -937,6 +921,7 @@ function generateQuestionsByCount(){
 }
 
 function hasConfiguredQuestions(){
+  if(!checkSetState.questions.length) return false
   if(checkSetState.questions.length !== 1) return true
   const first = checkSetState.questions[0]
   if(!first) return false
