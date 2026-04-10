@@ -552,10 +552,10 @@ function renderSummary(){
   }, 0)
 
   document.getElementById('summary-grid').innerHTML = [
-    summaryCard('반', bundleState.classes.length + '개'),
-    summaryCard('학습 세트', bundleState.studySets.length + '개'),
-    summaryCard('지문', passageCount + '개'),
-    summaryCard('학습 카드', cardCount + '개')
+    summaryCard('Classes', String(bundleState.classes.length)),
+    summaryCard('Sets', String(bundleState.studySets.length)),
+    summaryCard('Text', String(passageCount)),
+    summaryCard('Cards', String(cardCount))
   ].join('')
 }
 
@@ -564,21 +564,16 @@ function renderClassEditor(){
 
   document.getElementById('class-editor').innerHTML = bundleState.classes.map(function(classInfo, index){
     return '' +
-      '<div class="editor-card">' +
-        '<div class="editor-head">' +
-          '<div class="editor-index">Class ' + (index + 1) + '</div>' +
-          '<button class="btn btn-ghost btn-sm" type="button" onclick="removeClassConfig(' + index + ')"' + (bundleState.classes.length === 1 ? ' disabled' : '') + '>삭제</button>' +
+      '<div class="class-row">' +
+        '<div class="field">' +
+          '<label>반 ID</label>' +
+          '<input type="text" value="' + escapeAttr(classInfo.id) + '" onchange="updateClassId(' + index + ', this.value)">' +
         '</div>' +
-        '<div class="class-field-stack">' +
-          '<div>' +
-            '<div class="field-label">반 ID</div>' +
-            '<input type="text" value="' + escapeAttr(classInfo.id) + '" onchange="updateClassId(' + index + ', this.value)">' +
-          '</div>' +
-          '<div>' +
-            '<div class="field-label">반 이름</div>' +
-            '<input type="text" value="' + escapeAttr(classInfo.name) + '" oninput="updateClassField(' + index + ', \'name\', this.value)">' +
-          '</div>' +
+        '<div class="field">' +
+          '<label>반 이름</label>' +
+          '<input type="text" value="' + escapeAttr(classInfo.name) + '" oninput="updateClassField(' + index + ', \'name\', this.value)">' +
         '</div>' +
+        '<button class="btn btn-danger" type="button" onclick="removeClassConfig(' + index + ')"' + (bundleState.classes.length === 1 ? ' disabled' : '') + '>삭제</button>' +
       '</div>'
   }).join('')
 }
@@ -714,12 +709,10 @@ function generateBundle(){
   }
 
   downloadJson('session.json', output)
-  document.getElementById('result').classList.add('show')
-  document.getElementById('result-sub').textContent = 'master session.json을 만들었습니다. 이제 웹 서버의 기존 session.json만 이 파일로 교체하면 됩니다.'
 }
 
 function summaryCard(label, value){
-  return '<div class="summary-card"><div class="summary-label">' + escapeHtml(label) + '</div><div class="summary-value">' + escapeHtml(value) + '</div></div>'
+  return '<div class="summary-card"><div class="summary-kicker">' + escapeHtml(label) + '</div><div class="summary-value">' + escapeHtml(value) + '</div></div>'
 }
 
 function countCards(passage){
@@ -782,9 +775,14 @@ function normalizeNumberList(list, max){
 }
 
 function updateFileStatus(title, sub){
-  document.getElementById('file-zone').classList.add('loaded')
-  document.getElementById('fz-title').textContent = title
-  document.getElementById('fz-sub').textContent = sub
+  const zone = document.getElementById('file-zone')
+  const titleNode = document.getElementById('fz-title')
+  const subNode = document.getElementById('fz-sub')
+  if(!zone || !titleNode || !subNode) return
+
+  zone.classList.add('loaded')
+  titleNode.textContent = title
+  subNode.textContent = sub
 }
 
 function deepClone(value){
