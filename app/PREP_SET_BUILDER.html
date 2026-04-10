@@ -622,26 +622,21 @@ body:has(#class-screen[style*="display: flex"]) #header{display:none}
 <div id="setup">
   <div id="setup-shell">
   <div id="setup-left">
+  <div id="student-state" hidden aria-hidden="true">
+    <input type="text" id="stu-input" tabindex="-1" autocomplete="off">
+    <textarea id="bulk-stu"></textarea>
+    <div class="chip-wrap" id="stu-chips"></div>
+    <span id="stu-count">0</span>
+  </div>
   <div class="masthead"><h1>PREP SET BUILDER</h1></div>
   <div class="setup-cols">
-    <!-- 학생 -->
-    <div class="setup-panel">
-      <div class="section-label">① 학생 명단</div>
-      <label class="fl">이름 입력 후 Enter</label>
-      <div style="display:flex;gap:8px;"><input type="text" id="stu-input" placeholder="학생 이름"/><button class="btn btn-ghost btn-sm" onclick="addStudent()">추가</button></div>
-      <div class="chip-wrap" id="stu-chips"></div>
-      <label class="fl" style="margin-top:14px;">또는 일괄 입력 (줄 구분)</label>
-      <textarea id="bulk-stu" placeholder="홍길동&#10;이순신&#10;김철수" style="min-height:72px;"></textarea>
-      <button class="btn btn-ghost btn-sm" style="margin-top:6px;" onclick="bulkAdd()">일괄 추가</button>
-    </div>
     <!-- 지문 -->
     <div class="setup-panel">
-      <div class="section-label">② 시험범위 지문</div>
+      <div class="section-label">시험범위 지문</div>
       <label class="fl">지문 원문 붙여넣기</label>
       <textarea id="p-input" placeholder="문장마다 줄바꿈해서 넣어 주세요."></textarea>
       <label class="fl">전체 해석 붙여넣기</label>
       <textarea id="p-translation-input" placeholder="해석도 원문과 같은 줄 순서로 넣어 주세요." style="min-height:88px;"></textarea>
-      <div class="empty-note" style="margin-top:6px;">원문 한 줄 = 해석 한 줄 기준으로 저장됩니다.</div>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:6px;">
         <button class="btn btn-ghost btn-sm" onclick="addPassage()">+ 지문 추가</button>
         <label class="btn btn-ghost btn-sm" style="cursor:pointer;margin:0;" title="분석본 md 파일에서 주제, 서술형 문장, 어휘 포인트를 자동으로 가져옵니다">
@@ -649,7 +644,14 @@ body:has(#class-screen[style*="display: flex"]) #header{display:none}
           <input type="file" accept=".md,.markdown,text/markdown,text/plain" multiple onchange="importMarkdownFiles(event)" style="display:none;">
         </label>
       </div>
-      <div class="empty-note" style="margin-top:6px;">분석본 md를 넣으면 현재 편집 중인 지문이나 기존 지문과 문장·제목이 맞는 항목은 자동 매칭됩니다. 지문 이름은 지문을 추가한 뒤 각 지문 탭 맨 위에서 바꿀 수 있습니다.</div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:14px;">
+        <button class="btn btn-ghost btn-sm" onclick="saveSession()" title="현재 지문 구성과 세션 정보를 JSON 파일로 저장합니다">💾 세션 저장</button>
+        <label class="btn btn-ghost btn-sm" style="cursor:pointer;margin:0;" title="저장했던 세션 JSON 파일을 불러옵니다">
+          📂 세션 불러오기
+          <input type="file" accept=".json" onchange="loadSession(event)" style="display:none;">
+        </label>
+        <span style="font-size:0.76rem;color:var(--muted);">지문 <b id="p-count">0</b>개</span>
+      </div>
     </div>
   </div>
   </div>
@@ -671,17 +673,6 @@ body:has(#class-screen[style*="display: flex"]) #header{display:none}
     </div>
     <div class="p-stack" id="p-stack"></div>
   </div>
-  <div class="start-bar">
-    <span style="font-size:0.76rem;color:var(--muted);">학생 <b id="stu-count">0</b>명 · 지문 <b id="p-count">0</b>개</span>
-    <div style="display:flex;gap:8px;align-items:center;">
-      <button class="btn btn-ghost btn-sm" onclick="saveSession()" title="현재 학생 명단과 지문을 JSON 파일로 저장합니다">💾 세션 저장</button>
-      <label class="btn btn-ghost btn-sm" style="cursor:pointer;margin:0;" title="저장했던 JSON 파일을 불러옵니다">
-        📂 세션 불러오기
-        <input type="file" accept=".json" onchange="loadSession(event)" style="display:none;">
-      </label>
-      <button class="btn btn-red" style="padding:13px 40px;font-size:0.95rem;border-radius:10px;" onclick="doAssign()">▶ 배정 확인</button>
-    </div>
-  </div>
   </div>
   </div>
   <!-- 토스트 알림 -->
@@ -697,7 +688,7 @@ body:has(#class-screen[style*="display: flex"]) #header{display:none}
 <!-- ══ 배정 확인 ══ -->
 <div id="assign-screen">
   <div class="assign-title">지문 배정 결과</div>
-  <div class="assign-sub">학생별 담당 지문을 확인하고, 필요하면 직접 바꾼 뒤 바로 수업을 시작하세요.</div>
+  <div class="assign-sub">지문별 미리보기 배정을 확인하고, 필요하면 직접 바꾼 뒤 바로 수업을 시작하세요.</div>
   <div class="assign-summary" id="assign-summary"></div>
   <div class="assign-grid" id="assign-grid"></div>
   <div class="assign-actions">
@@ -714,7 +705,7 @@ body:has(#class-screen[style*="display: flex"]) #header{display:none}
     <div class="topbar-info">
       <div class="tstat">지문 <span id="stat-p">-</span></div>
       <div class="tstat">질문 <span id="stat-q">1/8</span></div>
-      <div class="tstat">담당 <span id="stat-stu">-</span></div>
+      <div class="tstat">진행 <span id="stat-stu">-</span></div>
       <button class="btn btn-ghost btn-sm" style="color:#a09a8e;border-color:#3d3a34;" onclick="endClass()">✕ 종료</button>
     </div>
   </div>
@@ -725,7 +716,7 @@ body:has(#class-screen[style*="display: flex"]) #header{display:none}
         <div id="scoreboard"></div>
       </div>
       <div>
-        <div class="sb-title">학생 담당 지문</div>
+        <div class="sb-title">배정 현황</div>
         <div id="sidebar-assign"></div>
       </div>
       <div>
@@ -1603,10 +1594,21 @@ function normalizeAssignmentPassageIndicesV2(indices){
     .map(index => Number(index))
     .filter(index => Number.isInteger(index) && index >= 0 && index < passages.length))].sort((a, b) => a - b);
 }
+function getPreviewSlotLabelV2(index){
+  return `미리보기 ${index + 1}`;
+}
+function getAssignmentParticipantsV2(){
+  return passages.map((_, index) => getPreviewSlotLabelV2(index));
+}
+function getScoringParticipantsV2(){
+  const assignedNames = uniqueStringsV2((assignments || []).map(item => String(item?.student || '').trim()));
+  return assignedNames.length ? assignedNames : getAssignmentParticipantsV2();
+}
 function buildRandomAssignmentsV2(){
-  const targetPerStudent = getPassagesPerStudentTargetV2();
-  const buckets = Object.fromEntries(students.map(student => [student, []]));
-  const studentOrder = shuffleV2([...students]);
+  const targetPerStudent = 1;
+  const participants = getAssignmentParticipantsV2();
+  const buckets = Object.fromEntries(participants.map(student => [student, []]));
+  const studentOrder = shuffleV2([...participants]);
   const shuffledPassages = shuffleV2([...Array(passages.length).keys()]);
   let cursor = 0;
   for(let round = 0; round < targetPerStudent && cursor < shuffledPassages.length; round += 1){
@@ -1616,7 +1618,7 @@ function buildRandomAssignmentsV2(){
       cursor += 1;
     });
   }
-  assignments = students.map(student => ({
+  assignments = participants.map(student => ({
     student,
     passageIdxs:normalizeAssignmentPassageIndicesV2(buckets[student])
   }));
@@ -3894,6 +3896,228 @@ function loadSession(event){
       currentQuestionState = null;
       renderSetup();
       showToast(`세션 불러오기 완료 · 학생 ${students.length}명 / 지문 ${passages.length}개`, 'var(--accent2)');
+    } catch(error){
+      showToast('세션 파일을 읽지 못했습니다. JSON 형식을 확인해 주세요.');
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+function getPreviewScoreParticipantsV2(){
+  const assignedNames = uniqueStringsV2((assignments || []).map(item => String(item?.student || '').trim()));
+  return assignedNames.length ? assignedNames : getAssignmentParticipantsV2();
+}
+function renderAssignmentCardsV2(){
+  const assignedCount = assignments.filter(item => (item.passageIdxs || []).length > 0).length;
+  const totalAssignedPassages = assignments.reduce((sum, item) => sum + (item.passageIdxs || []).length, 0);
+  const emptySlotCount = assignments.length - assignedCount;
+  const unassignedPassages = getUnassignedPassageIndicesV2();
+  document.getElementById('assign-summary').innerHTML = `
+    <div class="assign-summary-title">
+      학생명단 없이 <b>${assignedCount}</b>개의 미리보기 슬롯으로 지문을 정리했습니다.${emptySlotCount ? ` 아직 비어 있는 슬롯 ${emptySlotCount}개` : ''}
+    </div>
+    <div class="assign-summary-sub">
+      실제 학생 배정은 ROTATION LAB에서 진행하세요. 여기서는 지문 흐름을 빠르게 점검할 수 있도록 미리보기 슬롯만 보여줍니다.
+      아래 선택칸에서 직접 바꾸면 같은 지문은 이전 슬롯에서 자동으로 빠집니다.
+    </div>
+    <div class="assign-summary-sub">현재 배정된 지문 수: <b>${totalAssignedPassages}</b> / ${passages.length}</div>
+    ${unassignedPassages.length ? `<div class="assign-summary-tags">${unassignedPassages.map(index => `<div class="ac-tag">${htmlEscV2(getPassageShortLabelV2(passages[index], index))}</div>`).join('')}</div>` : ''}
+  `;
+  document.getElementById('assign-grid').innerHTML = assignments.map(item => {
+    const assignedPIdx = getAssignmentPassageIndexV2(item);
+    const assignedPassages = normalizeAssignmentPassageIndicesV2(item.passageIdxs);
+    return `
+      <div class="assign-card">
+        <div class="ac-name"><div class="ac-avatar">${htmlEscV2(item.student.charAt(0))}</div>${htmlEscV2(item.student)}</div>
+        <div class="ac-tags">${assignedPassages.map(index => `<div class="ac-tag">${htmlEscV2(getPassageShortLabelV2(passages[index], index))}</div>`).join('')}</div>
+        ${assignedPassages.length ? '' : '<div class="assign-empty">아직 배정된 지문이 없습니다.</div>'}
+        <div class="assign-select-wrap">
+          <div class="assign-select-label">미리보기 지문</div>
+          <select class="assign-select" onchange='updateAssignmentPassageV2(${JSON.stringify(item.student)}, this.value)'>
+            <option value="" ${assignedPIdx < 0 ? 'selected' : ''}>배정 안 함</option>
+            ${passages.map((passage, index) => `<option value="${index}" ${index === assignedPIdx ? 'selected' : ''}>${htmlEscV2(getPassageDisplayNameV2(passage, index))}</option>`).join('')}
+          </select>
+          <div class="assign-config-meta">미리보기 슬롯마다 지문 1개씩 연결합니다. 실제 학생 배정은 ROTATION LAB에서 이어서 진행하세요.</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+function doAssign(){
+  normalizeAllSetupStateV2();
+  if(!passages.length){
+    alert('지문을 1개 이상 추가해 주세요.');
+    return;
+  }
+  const validation = getSetupValidationV2();
+  if(!validation.ok){
+    alert(validation.message);
+    return;
+  }
+  buildRandomAssignmentsV2();
+  renderAssignmentCardsV2();
+  document.getElementById('assign-screen').style.display = 'block';
+  document.getElementById('setup').style.display = 'none';
+}
+function startClass(){
+  const validation = getSetupValidationV2();
+  if(!validation.ok){
+    alert(validation.message);
+    return;
+  }
+  if(!assignments.length){
+    doAssign();
+    if(!assignments.length) return;
+  }
+  sessionQueue = assignments.flatMap(buildStudentTurnsV2);
+  totalQuestions = sessionQueue.reduce((sum, turn) => sum + turn.questions.length, 0);
+  if(!totalQuestions){
+    alert('출제 가능한 질문이 없습니다.');
+    return;
+  }
+  sessionPos = 0;
+  answeredCount = 0;
+  scoreMap = {};
+  getPreviewScoreParticipantsV2().forEach(student => { scoreMap[student] = 0; });
+  currentQuestionState = null;
+  document.getElementById('assign-screen').style.display = 'none';
+  document.getElementById('class-screen').style.display = 'flex';
+  loadPassageTurn();
+}
+function assignSubStudentV2(){
+  return null;
+}
+function renderSidebar(){
+  const sorted = getPreviewScoreParticipantsV2().slice().sort((a, b) => (scoreMap[b] || 0) - (scoreMap[a] || 0));
+  document.getElementById('scoreboard').innerHTML = sorted.map((student, index) => {
+    const score = scoreMap[student] || 0;
+    const isCurrent = student === currentStudent;
+    return `
+      <div style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;${isCurrent ? 'background:rgba(200,55,26,.06);' : ''}margin-bottom:3px;">
+        <span style="font-family:'Bebas Neue',sans-serif;font-size:0.9rem;color:var(--muted);width:16px;text-align:center;">${index + 1}</span>
+        <span style="flex:1;font-size:0.82rem;font-weight:${isCurrent ? '700' : '400'};color:${isCurrent ? 'var(--accent)' : 'var(--ink)'};">${htmlEscV2(student)}</span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:0.78rem;font-weight:700;color:${score > 0 ? 'var(--green)' : 'var(--muted)'};">${score}점</span>
+      </div>
+    `;
+  }).join('');
+
+  const donePassages = sessionQueue.slice(0, sessionPos).map(turn => turn.pIdx);
+  document.getElementById('sidebar-assign').innerHTML = assignments.map(item => {
+    const ownerMatch = item.student === sessionQueue[sessionPos]?.student;
+    const activeMatch = item.student === currentStudent || item.student === originalStudent;
+    return `
+      <div class="al-row ${activeMatch ? 'al-active' : ''}">
+        <div class="al-name">${ownerMatch ? '• ' : ''}${htmlEscV2(item.student)}</div>
+        <div class="al-tags">${item.passageIdxs.map(pIdx => {
+          const isCurrent = pIdx === currentPIdx && ownerMatch;
+          const isDone = donePassages.includes(pIdx);
+          return `<span class="al-tag ${isCurrent ? 'current' : isDone ? 'done' : ''}">${htmlEscV2(getPassageShortLabelV2(passages[pIdx], pIdx, 14))}</span>`;
+        }).join('')}</div>
+      </div>
+    `;
+  }).join('');
+
+  const turnQuestions = sessionQueue[sessionPos]?.questions || [];
+  const doneKeys = new Set(doneTypes.map(item => item.key));
+  document.getElementById('qt-list').innerHTML = turnQuestions.map(question => {
+    const done = doneKeys.has(question.key);
+    const current = question.key === currentQuestionState?.key;
+    return `<div class="qt-row ${done ? 'qt-done' : current ? 'qt-active' : 'qt-wait'}">${question.sidebarLabel || question.label}</div>`;
+  }).join('');
+}
+function showDone(){
+  document.getElementById('done-sub').textContent = `배정 지문 ${sessionQueue.length}개, 총 ${totalQuestions}문항을 마쳤습니다.`;
+  const sorted = getPreviewScoreParticipantsV2().slice().sort((a, b) => (scoreMap[b] || 0) - (scoreMap[a] || 0));
+  const maxScore = scoreMap[sorted[0]] || 0;
+  document.getElementById('final-scoreboard').innerHTML = `
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:2px;color:var(--muted);margin-bottom:12px;text-align:center;">최종 점수</div>
+    ${sorted.map((student, index) => {
+      const score = scoreMap[student] || 0;
+      const isFirst = index === 0 && score > 0;
+      const pct = maxScore > 0 ? Math.round((score / maxScore) * 100) : 0;
+      return `
+        <div style="background:${isFirst ? 'rgba(200,55,26,.08)' : 'var(--card)'};border:1.5px solid ${isFirst ? 'rgba(200,55,26,.4)' : 'var(--border)'};border-radius:10px;padding:12px 16px;margin-bottom:8px;display:flex;align-items:center;gap:12px;">
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:${isFirst ? 'var(--accent)' : 'var(--muted)'};width:28px;text-align:center;">${index + 1}</div>
+          <div style="flex:1;">
+            <div style="font-weight:900;font-size:1rem;">${htmlEscV2(student)}</div>
+            <div style="background:var(--border);border-radius:999px;height:5px;margin-top:5px;overflow:hidden;"><div style="height:100%;width:${pct}%;background:${isFirst ? 'var(--accent)' : 'var(--accent2)'};border-radius:999px;"></div></div>
+          </div>
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:1.8rem;color:${isFirst ? 'var(--accent)' : 'var(--ink)'};">${score}</div>
+        </div>
+      `;
+    }).join('')}
+  `;
+  document.getElementById('done-overlay').classList.add('show');
+}
+function saveSession(){
+  normalizeAllSetupStateV2();
+  if(!passages.length){
+    showToast('저장할 내용이 없습니다.');
+    return;
+  }
+  const data = {
+    version:3,
+    savedAt:new Date().toISOString(),
+    students:[],
+    questionConfigMode,
+    questionCounts:{ ...questionCounts },
+    assignmentSettings:{ ...assignmentSettings },
+    passages:passages.map(passage => {
+      const normalized = normalizePassageV2(passage);
+      const selectionUnits = getPassageSelectionUnitsV3(normalized);
+      const selectedSents = normalizeNumberListV3(normalized.selectedLines, selectionUnits.length).map(index => selectionUnits[index]).filter(Boolean);
+      const translationAnswers = {};
+      normalizeNumberListV3(normalized.selectedLines, selectionUnits.length).forEach(index => {
+        if(selectionUnits[index]) translationAnswers[selectionUnits[index]] = getTranslationForLineV3(normalized, index);
+      });
+      return {
+        ...normalized,
+        selectedSents,
+        translationAnswers,
+        grammarRows:(normalized.grammarSelections || []).map(row => ({
+          point:row.text,
+          answer:row.answer,
+          lineIndex:row.lineIndex,
+          context:row.context
+        }))
+      };
+    })
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type:'application/json' });
+  const url = URL.createObjectURL(blob);
+  const now = new Date();
+  const stamp = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}`;
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `rotation_session_${stamp}.json`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+  showToast(`세션 저장 완료 · 지문 ${passages.length}개`, 'var(--green)');
+}
+function loadSession(event){
+  const file = event.target.files?.[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try{
+      const data = JSON.parse(e.target.result);
+      if(!Array.isArray(data.passages)) throw new Error('invalid');
+      students = [];
+      passages = data.passages.map(normalizePassageV2);
+      questionConfigMode = normalizeQuestionConfigModeV2(data.questionConfigMode);
+      questionCounts = normalizeQuestionCountsV2(data.questionCounts || {});
+      assignmentSettings = normalizeAssignmentSettingsV2(data.assignmentSettings || {});
+      assignments = [];
+      sessionQueue = [];
+      sessionPos = 0;
+      answeredCount = 0;
+      totalQuestions = 0;
+      scoreMap = {};
+      currentQuestionState = null;
+      renderSetup();
+      showToast(`세션 불러오기 완료 · 지문 ${passages.length}개`, 'var(--accent2)');
     } catch(error){
       showToast('세션 파일을 읽지 못했습니다. JSON 형식을 확인해 주세요.');
     }
