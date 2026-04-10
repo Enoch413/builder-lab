@@ -4,9 +4,12 @@ const DEFAULT_CHECK_CLASSES = [
   { id: 'class-1-seonbu', name: '1선부' },
   { id: 'class-3-seonbu', name: '3선부' }
 ]
+const CHECK_MASTER_LAB_NAME = 'check-master-builder'
 
 let checkMasterState = createEmptyCheckMaster()
 let checkMasterImportCounter = 0
+let checkMasterAdminProfile = null
+let checkMasterDefaultClassId = ''
 
 const loadMasterBtn = document.getElementById('load-master-btn')
 const addSetBtn = document.getElementById('add-set-btn')
@@ -39,6 +42,7 @@ masterFileInput.addEventListener('change', loadExistingCheckMaster)
 setFileInput.addEventListener('change', addCheckSetFiles)
 
 renderCheckMaster()
+initializeCheckMasterAdminDefaults()
 
 function createEmptyCheckMaster(){
   return {
@@ -58,6 +62,91 @@ function createCheckClass(index, source){
     id: String(info.id || fallback.id || ('class-' + (index + 1))).trim() || ('class-' + (index + 1)),
     name: String(info.name || ((index + 1) + '반')).trim() || ((index + 1) + '반')
   }
+}
+
+function matchesCheckClassList(classes, sources){
+  const targetList = Array.isArray(sources) ? sources : []
+  if((Array.isArray(classes) ? classes : []).length !== targetList.length) return false
+
+  return classes.every(function(classInfo, index){
+    const fallback = createCheckClass(index, targetList[index])
+    return String(classInfo && classInfo.id || '').trim() === fallback.id
+      && String(classInfo && classInfo.name || '').trim() === fallback.name
+  })
+}
+
+function isCheckMasterUsingFallbackState(){
+  return !checkMasterState.checkSets.length && matchesCheckClassList(checkMasterState.classes, DEFAULT_CHECK_CLASSES)
+}
+
+function getCheckMasterProfileClassIds(){
+  return checkMasterAdminProfile && Array.isArray(checkMasterAdminProfile.classIds)
+    ? checkMasterAdminProfile.classIds.slice()
+    : []
+}
+
+function getCheckMasterPreferredClassId(){
+  const validIds = checkMasterState.classes.map(function(classInfo){
+    return String(classInfo && classInfo.id || '').trim()
+  }).filter(Boolean)
+
+  if(checkMasterDefaultClassId && validIds.includes(checkMasterDefaultClassId)){
+    return checkMasterDefaultClassId
+  }
+
+  return getCheckMasterProfileClassIds().find(function(classId){
+    return validIds.includes(classId)
+  }) || ''
+}
+
+function getCheckMasterDefaultClassIds(){
+  const preferredClassId = getCheckMasterPreferredClassId()
+  if(preferredClassId) return [preferredClassId]
+
+  return checkMasterState.classes.map(function(classInfo){
+    return classInfo.id
+  }).filter(Boolean)
+}
+
+function rememberCheckMasterLastClassId(classId){
+  const normalizedClassId = String(classId || '').trim()
+  if(!normalizedClassId || !checkMasterAdminProfile || !checkMasterAdminProfile.uid) return
+  if(!getCheckMasterProfileClassIds().includes(normalizedClassId)) return
+
+  checkMasterDefaultClassId = normalizedClassId
+  if(window.builderLabAuth && typeof window.builderLabAuth.rememberLastClassId === 'function'){
+    window.builderLabAuth.rememberLastClassId(CHECK_MASTER_LAB_NAME, checkMasterAdminProfile.uid, normalizedClassId)
+  }
+}
+
+function syncCheckMasterRememberedClassId(previousId, nextId){
+  if(!checkMasterAdminProfile || !checkMasterAdminProfile.uid || !previousId || previousId === nextId) return
+  if(!getCheckMasterProfileClassIds().includes(previousId)) return
+  if(!getCheckMasterProfileClassIds().includes(nextId)) return
+  rememberCheckMasterLastClassId(nextId)
+}
+
+async function initializeCheckMasterAdminDefaults(){
+  if(!window.builderLabAuth || typeof window.builderLabAuth.resolveLabAdminDefaults !== 'function') return
+
+  const canApplyClassDefaults = isCheckMasterUsingFallbackState()
+  const resolved = await window.builderLabAuth.resolveLabAdminDefaults({
+    labName: CHECK_MASTER_LAB_NAME,
+    classes: checkMasterState.classes
+  })
+
+  checkMasterAdminProfile = resolved && resolved.applied && resolved.profile ? resolved.profile : null
+  checkMasterDefaultClassId = resolved && resolved.applied && resolved.defaultClassId ? resolved.defaultClassId : ''
+
+  if(!canApplyClassDefaults || !isCheckMasterUsingFallbackState() || !resolved || !resolved.applied || !Array.isArray(resolved.classes) || !resolved.classes.length){
+    return
+  }
+
+  checkMasterState.classes = resolved.classes.slice(0, 8).map(function(classInfo, index){
+    return createCheckClass(index, classInfo)
+  })
+  syncCheckSetClassIds()
+  renderCheckMaster()
 }
 
 function createCheckMasterSet(source, defaultClassIds){
@@ -230,6 +319,7 @@ function onClassFieldChange(event){
   }
 
   if(fieldName === 'id' && previousId !== checkMasterState.classes[index].id){
+    syncCheckMasterRememberedClassId(previousId, checkMasterState.classes[index].id)
     checkMasterState.checkSets.forEach(function(setInfo){
       setInfo.classIds = setInfo.classIds.map(function(classId){
         return classId === previousId ? checkMasterState.classes[index].id : classId
@@ -291,6 +381,7 @@ function onSetClassToggle(event){
   const classId = event.target.dataset.classId
   if(event.target.checked){
     if(!setInfo.classIds.includes(classId)) setInfo.classIds.push(classId)
+    rememberCheckMasterLastClassId(classId)
   }else{
     setInfo.classIds = setInfo.classIds.filter(function(entry){
       return entry !== classId
@@ -325,9 +416,7 @@ function addCheckSetFiles(event){
   if(!files.length) return
 
   let importedCount = 0
-  const defaultClassIds = checkMasterState.classes.map(function(classInfo){
-    return classInfo.id
-  })
+  const defaultClassIds = getCheckMasterDefaultClassIds()
 
   files.forEach(function(file){
     readJsonFile(file, function(data){
@@ -398,13 +487,16 @@ function syncCheckSetClassIds(){
   const validIds = checkMasterState.classes.map(function(classInfo){
     return classInfo.id
   }).filter(Boolean)
+  const defaultClassIds = getCheckMasterDefaultClassIds().filter(function(classId){
+    return validIds.includes(classId)
+  })
 
   checkMasterState.checkSets.forEach(function(setInfo){
     setInfo.classIds = (Array.isArray(setInfo.classIds) ? setInfo.classIds : []).filter(function(classId){
       return validIds.includes(classId)
     })
     if(!setInfo.classIds.length && validIds.length){
-      setInfo.classIds = validIds.slice()
+      setInfo.classIds = (defaultClassIds.length ? defaultClassIds : validIds).slice()
     }
   })
 }

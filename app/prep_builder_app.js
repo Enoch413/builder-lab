@@ -4,10 +4,13 @@ const DEFAULT_CLASS_CONFIGS = [
   { id: 'class-1-seonbu', name: '1선부', password: '' },
   { id: 'class-3-seonbu', name: '3선부', password: '' }
 ]
+const PREP_MASTER_LAB_NAME = 'prep-master-builder'
 
 let bundleState = createEmptyBundle()
 let rotationImportClassIds = []
 let studySetUiState = {}
+let prepAdminProfile = null
+let prepDefaultClassId = ''
 rotationImportClassIds = bundleState.classes.map(function(classInfo){ return classInfo.id })
 
 document.getElementById('load-master-btn').addEventListener('click', function(){
@@ -28,6 +31,7 @@ if(globalPasswordInput){
 }
 
 renderAll()
+initializePrepMasterAdminDefaults()
 
 function createEmptyBundle(){
   return {
@@ -63,6 +67,89 @@ function createClassConfig(index, source){
     name: name,
     password: password
   }
+}
+
+function matchesPrepClassList(classes, sources){
+  const targetList = Array.isArray(sources) ? sources : []
+  if((Array.isArray(classes) ? classes : []).length !== targetList.length) return false
+
+  return classes.every(function(classInfo, index){
+    const fallback = createClassConfig(index, targetList[index])
+    return String(classInfo && classInfo.id || '').trim() === fallback.id
+      && String(classInfo && classInfo.name || '').trim() === fallback.name
+      && normalizeOptionalPassword(classInfo && classInfo.password) === fallback.password
+  })
+}
+
+function isPrepBuilderUsingFallbackState(){
+  return !bundleState.studySets.length && matchesPrepClassList(bundleState.classes, DEFAULT_CLASS_CONFIGS)
+}
+
+function getPrepProfileClassIds(){
+  return prepAdminProfile && Array.isArray(prepAdminProfile.classIds)
+    ? prepAdminProfile.classIds.slice()
+    : []
+}
+
+function getPrepPreferredClassId(){
+  const validIds = bundleState.classes.map(function(classInfo){
+    return String(classInfo && classInfo.id || '').trim()
+  }).filter(Boolean)
+
+  if(prepDefaultClassId && validIds.includes(prepDefaultClassId)){
+    return prepDefaultClassId
+  }
+
+  return getPrepProfileClassIds().find(function(classId){
+    return validIds.includes(classId)
+  }) || ''
+}
+
+function getPrepDefaultAssignedClassIds(){
+  const preferredClassId = getPrepPreferredClassId()
+  return preferredClassId ? [preferredClassId] : []
+}
+
+function rememberPrepLastClassId(classId){
+  const normalizedClassId = String(classId || '').trim()
+  if(!normalizedClassId || !prepAdminProfile || !prepAdminProfile.uid) return
+  if(!getPrepProfileClassIds().includes(normalizedClassId)) return
+
+  prepDefaultClassId = normalizedClassId
+  if(window.builderLabAuth && typeof window.builderLabAuth.rememberLastClassId === 'function'){
+    window.builderLabAuth.rememberLastClassId(PREP_MASTER_LAB_NAME, prepAdminProfile.uid, normalizedClassId)
+  }
+}
+
+function syncPrepRememberedClassId(previousId, nextId){
+  if(!prepAdminProfile || !prepAdminProfile.uid || !previousId || previousId === nextId) return
+  if(!getPrepProfileClassIds().includes(previousId)) return
+  if(!getPrepProfileClassIds().includes(nextId)) return
+  rememberPrepLastClassId(nextId)
+}
+
+async function initializePrepMasterAdminDefaults(){
+  if(!window.builderLabAuth || typeof window.builderLabAuth.resolveLabAdminDefaults !== 'function') return
+
+  const canApplyClassDefaults = isPrepBuilderUsingFallbackState()
+  const resolved = await window.builderLabAuth.resolveLabAdminDefaults({
+    labName: PREP_MASTER_LAB_NAME,
+    classes: bundleState.classes
+  })
+
+  prepAdminProfile = resolved && resolved.applied && resolved.profile ? resolved.profile : null
+  prepDefaultClassId = resolved && resolved.applied && resolved.defaultClassId ? resolved.defaultClassId : ''
+
+  if(!canApplyClassDefaults || !isPrepBuilderUsingFallbackState() || !resolved || !resolved.applied || !Array.isArray(resolved.classes) || !resolved.classes.length){
+    return
+  }
+
+  bundleState.classes = resolved.classes.slice(0, 8).map(function(classInfo, index){
+    return createClassConfig(index, classInfo)
+  })
+  rotationImportClassIds = getPrepDefaultAssignedClassIds()
+  syncAssignments()
+  renderAll()
 }
 
 function onFileLoad(event){
@@ -122,7 +209,7 @@ function onRotationLoad(event){
 
   readJsonFile(file, function(data){
     if(!Array.isArray(data.passages)) throw new Error('INVALID_ROTATION')
-    bundleState.studySets.push(createStudySetFromRotation(data, file.name))
+    bundleState.studySets.push(createStudySetFromRotation(data, file.name, getPrepDefaultAssignedClassIds()))
     syncAssignments()
     updateFileStatus(file.name, 'ROTATION 세션을 새 학습 세트로 추가했습니다. 반 배정은 오른쪽에서 설정해 주세요.')
     renderAll()
@@ -398,6 +485,7 @@ function toggleImportClass(classId, checked){
   if(checked) selected.add(classId)
   else selected.delete(classId)
   rotationImportClassIds = Array.from(selected)
+  if(checked) rememberPrepLastClassId(classId)
   renderImportClassTargets()
 }
 
@@ -466,6 +554,7 @@ function updateClassId(index, value){
   classInfo.id = nextId
 
   if(previousId && previousId !== nextId){
+    syncPrepRememberedClassId(previousId, nextId)
     rotationImportClassIds = rotationImportClassIds.map(function(classId){
       return classId === previousId ? nextId : classId
     })
@@ -524,6 +613,7 @@ function toggleSetClassAssignment(setIndex, classId, checked){
   assignment.passageIndexes = checked
     ? (normalizedIndexes.length ? normalizedIndexes : getAllPassageIndexes(studySet))
     : []
+  if(checked) rememberPrepLastClassId(classId)
 
   preserveViewport(renderSetEditor)
 }
