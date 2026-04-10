@@ -24,9 +24,12 @@ document.getElementById('generate-btn').addEventListener('click', generateBundle
 document.getElementById('page-title').addEventListener('input', function(event){
   bundleState.prepConfig.pageTitle = event.target.value
 })
-document.getElementById('global-password').addEventListener('input', function(event){
-  bundleState.prepConfig.globalPassword = event.target.value
-})
+const globalPasswordInput = document.getElementById('global-password')
+if(globalPasswordInput){
+  globalPasswordInput.addEventListener('input', function(event){
+    bundleState.prepConfig.globalPassword = event.target.value
+  })
+}
 
 renderAll()
 
@@ -43,16 +46,26 @@ function createEmptyBundle(){
   }
 }
 
+function hasOwnPropertyV2(source, key){
+  return !!source && Object.prototype.hasOwnProperty.call(source, key)
+}
+
+function normalizeOptionalPassword(value){
+  return String(value || '').trim()
+}
+
 function createClassConfig(index, source){
   const info = source || {}
   const fallback = DEFAULT_CLASS_CONFIGS[index] || {}
-  if(!info.id && fallback.id) info.id = fallback.id
-  if(!info.name && fallback.name) info.name = fallback.name
-  if(!info.password && fallback.password) info.password = fallback.password
+  const id = String(info.id || fallback.id || ('class-' + (index + 1))).trim() || ('class-' + (index + 1))
+  const name = String(info.name || ((index + 1) + '반')).trim() || ((index + 1) + '반')
+  const password = hasOwnPropertyV2(info, 'password')
+    ? normalizeOptionalPassword(info.password)
+    : normalizeOptionalPassword(fallback.password)
   return {
-    id: String(info.id || fallback.id || ('class-' + (index + 1))).trim() || ('class-' + (index + 1)),
-    name: String(info.name || ((index + 1) + '반')).trim() || ((index + 1) + '반'),
-    password: String(info.password || '').trim()
+    id: id,
+    name: name,
+    password: password
   }
 }
 
@@ -185,6 +198,7 @@ function createStudySetFromRotation(data, fileName, defaultClassIds){
 
 function normalizeBundleForBuilder(data){
   const source = data || {}
+  const prepConfigSource = source.prepConfig || {}
   const classesSource = Array.isArray(source.classes) && source.classes.length ? source.classes : source.prepClasses
   const classes = (Array.isArray(classesSource) ? classesSource : []).slice(0, 8).map(function(classInfo, index){
     return createClassConfig(index, classInfo)
@@ -207,8 +221,10 @@ function normalizeBundleForBuilder(data){
 
   return {
     prepConfig: {
-      pageTitle: String((source.prepConfig && source.prepConfig.pageTitle) || source.pageTitle || 'ROTATION PREP').trim() || 'ROTATION PREP',
-      globalPassword: String((source.prepConfig && source.prepConfig.globalPassword) || source.password || '').trim()
+      pageTitle: String(prepConfigSource.pageTitle || source.pageTitle || 'ROTATION PREP').trim() || 'ROTATION PREP',
+      globalPassword: hasOwnPropertyV2(prepConfigSource, 'globalPassword')
+        ? normalizeOptionalPassword(prepConfigSource.globalPassword)
+        : normalizeOptionalPassword(source.password)
     },
     classes: finalClasses,
     studySets: studySets
@@ -281,6 +297,27 @@ function getSelectedImportClassIds(){
   return rotationImportClassIds.slice()
 }
 
+function normalizeClassIdValue(value, index){
+  return String(value || '').trim() || ('class-' + (index + 1))
+}
+
+function ensureUniqueClassId(value, index){
+  const existingIds = new Set(bundleState.classes.map(function(classInfo, classIndex){
+    if(classIndex === index) return ''
+    return String(classInfo && classInfo.id || '').trim()
+  }).filter(Boolean))
+
+  if(!existingIds.has(value)) return value
+
+  let suffix = 2
+  let nextValue = value + '-' + suffix
+  while(existingIds.has(nextValue)){
+    suffix += 1
+    nextValue = value + '-' + suffix
+  }
+  return nextValue
+}
+
 function toggleImportClass(classId, checked){
   const selected = new Set(getSelectedImportClassIds())
   if(checked) selected.add(classId)
@@ -341,6 +378,35 @@ function updateClassField(index, field, value){
   renderSetEditor()
 }
 
+function updateClassId(index, value){
+  const classInfo = bundleState.classes[index]
+  if(!classInfo) return
+
+  const previousId = String(classInfo.id || '').trim()
+  const nextId = ensureUniqueClassId(normalizeClassIdValue(value, index), index)
+  classInfo.id = nextId
+
+  if(previousId && previousId !== nextId){
+    rotationImportClassIds = rotationImportClassIds.map(function(classId){
+      return classId === previousId ? nextId : classId
+    })
+
+    bundleState.studySets.forEach(function(studySet){
+      studySet.classAssignments = (studySet.classAssignments || []).map(function(assignment){
+        if(!assignment || assignment.classId !== previousId) return assignment
+        return {
+          classId: nextId,
+          passageIndexes: normalizeNumberList(assignment.passageIndexes, Array.isArray(studySet.passages) ? studySet.passages.length : 0)
+        }
+      })
+    })
+  }
+
+  syncRotationImportClassIds(rotationImportClassIds)
+  syncAssignments()
+  renderAll()
+}
+
 function removeStudySet(index){
   bundleState.studySets.splice(index, 1)
   renderAll()
@@ -374,7 +440,9 @@ function toggleAssignment(setIndex, classId, passageIndex, checked){
 function renderAll(){
   syncRotationImportClassIds(rotationImportClassIds)
   document.getElementById('page-title').value = bundleState.prepConfig.pageTitle
-  document.getElementById('global-password').value = bundleState.prepConfig.globalPassword
+  if(globalPasswordInput){
+    globalPasswordInput.value = bundleState.prepConfig.globalPassword
+  }
   renderImportClassTargets()
   renderSummary()
   renderClassEditor()
@@ -416,7 +484,7 @@ function renderClassEditor(){
         '</div>' +
         '<div>' +
           '<div class="field-label">반 ID</div>' +
-          '<input type="text" value="' + escapeAttr(classInfo.id) + '" readonly>' +
+          '<input type="text" value="' + escapeAttr(classInfo.id) + '" onchange="updateClassId(' + index + ', this.value)">' +
         '</div>' +
         '<div class="row-2">' +
           '<div>' +
@@ -424,8 +492,8 @@ function renderClassEditor(){
             '<input type="text" value="' + escapeAttr(classInfo.name) + '" oninput="updateClassField(' + index + ', \'name\', this.value)">' +
           '</div>' +
           '<div>' +
-            '<div class="field-label">반 비밀번호</div>' +
-            '<input type="text" value="' + escapeAttr(classInfo.password) + '" placeholder="비워 두면 바로 입장" oninput="updateClassField(' + index + ', \'password\', this.value)">' +
+            '<div class="field-label">반 비밀번호 (선택)</div>' +
+            '<input type="text" value="' + escapeAttr(classInfo.password) + '" placeholder="비워 둬도 됩니다" oninput="updateClassField(' + index + ', \'password\', this.value)">' +
           '</div>' +
         '</div>' +
       '</div>'
@@ -433,8 +501,15 @@ function renderClassEditor(){
 }
 
 function renderSetEditor(){
-  if(!bundleState.studySets.length){
-    document.getElementById('set-editor').innerHTML = '<div class="empty-box">아직 학습 세트가 없습니다. ROTATION 세션 JSON을 불러와 세트를 추가해 주세요.</div>'
+  const hasStudySets = bundleState.studySets.length > 0
+  const emptyStage = document.getElementById('set-empty') || document.querySelector('#right .workspace-stage')
+  const workspace = document.getElementById('set-workspace')
+
+  if(emptyStage) emptyStage.style.display = hasStudySets ? 'none' : 'flex'
+  if(workspace) workspace.style.display = hasStudySets ? 'block' : 'none'
+
+  if(!hasStudySets){
+    document.getElementById('set-editor').innerHTML = ''
     return
   }
 
@@ -513,7 +588,7 @@ function generateBundle(){
     return {
       id: String(classInfo.id || ('class-' + (index + 1))).trim() || ('class-' + (index + 1)),
       name: String(classInfo.name || ((index + 1) + '반')).trim() || ((index + 1) + '반'),
-      password: String(classInfo.password || '').trim()
+      password: normalizeOptionalPassword(classInfo.password)
     }
   })
 
@@ -539,7 +614,7 @@ function generateBundle(){
     savedAt: now,
     prepConfig: {
       pageTitle: String(bundleState.prepConfig.pageTitle || 'ROTATION PREP').trim() || 'ROTATION PREP',
-      globalPassword: String(bundleState.prepConfig.globalPassword || '').trim(),
+      globalPassword: normalizeOptionalPassword(bundleState.prepConfig.globalPassword),
       generatedAt: now
     },
     classes: classes,

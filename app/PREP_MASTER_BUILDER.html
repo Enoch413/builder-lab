@@ -450,16 +450,10 @@ input[type=text]:focus,input[type=date]:focus{
     <section class="step">
       <div class="step-num">Step 02</div>
       <div class="step-title">PREP 기본 설정</div>
-      <div class="step-desc">페이지 제목과 공통 비밀번호를 설정합니다. 공통 비밀번호를 비워 두면 반 비밀번호만 사용합니다.</div>
-      <div class="row-2">
-        <div>
-          <div class="field-label">페이지 제목</div>
-          <input type="text" id="page-title" placeholder="예: 영어1 PREP">
-        </div>
-        <div>
-          <div class="field-label">공통 비밀번호</div>
-          <input type="text" id="global-password" class="mono-input" placeholder="예: 1234">
-        </div>
+      <div class="step-desc">페이지 제목을 설정합니다.</div>
+      <div>
+        <div class="field-label">페이지 제목</div>
+        <input type="text" id="page-title" placeholder="예: 영어1 PREP">
       </div>
     </section>
 
@@ -468,7 +462,7 @@ input[type=text]:focus,input[type=date]:focus{
       <div class="step-title">반 설정</div>
       <div class="step-desc">반은 최대 8개까지 만들 수 있고, 모든 학습 세트에서 공통으로 사용합니다.</div>
       <div class="toolbar">
-        <div class="hint">반 이름과 반 비밀번호를 먼저 정한 뒤, 각 학습 세트마다 어떤 지문을 보여줄지 선택합니다.</div>
+        <div class="hint">반 이름을 먼저 정하고, 필요하면 반 비밀번호를 넣은 뒤 각 학습 세트마다 어떤 지문을 보여줄지 선택합니다.</div>
         <button class="btn btn-blue btn-sm" type="button" id="add-class-btn">반 추가</button>
       </div>
       <div class="editor-list" id="class-editor"></div>
@@ -476,28 +470,29 @@ input[type=text]:focus,input[type=date]:focus{
   </aside>
 
   <main id="right">
-    <div class="workspace-stage">
+    <div class="workspace-stage" id="set-empty">
       <div class="workspace-kicker">READY TO BUILD</div>
       <div class="workspace-copy">학습 세트 구성과 최종 다운로드는 이 영역에서 계속 정리합니다. 왼쪽 반 설정이 바뀌면 세트 배정도 같이 반영됩니다.</div>
     </div>
+    <div id="set-workspace" style="display:none">
+      <section class="step">
+        <div class="step-num">Step 04</div>
+        <div class="step-title">학습 세트 설정</div>
+        <div class="step-desc">학습 세트마다 제목과 기간을 정하고, 각 반에 보여줄 지문을 따로 체크합니다. 기간이 지나면 학생 화면에서는 종료 상태로 보입니다.</div>
+        <div class="editor-list" id="set-editor"></div>
+      </section>
 
-    <section class="step">
-      <div class="step-num">Step 04</div>
-      <div class="step-title">학습 세트 설정</div>
-      <div class="step-desc">학습 세트마다 제목과 기간을 정하고, 각 반에 보여줄 지문을 따로 체크합니다. 기간이 지나면 학생 화면에서는 종료 상태로 보입니다.</div>
-      <div class="editor-list" id="set-editor"></div>
-    </section>
-
-    <section class="step">
-      <div class="step-num">Step 05</div>
-      <div class="step-title">master session.json 생성</div>
-      <div class="step-desc">고정 PREP 페이지는 그대로 두고, 이 session.json 하나만 배포하면 여러 반과 여러 기간을 함께 운영할 수 있습니다.</div>
-      <button class="btn btn-red" id="generate-btn" type="button" disabled>master session.json 다운로드</button>
-      <div class="result" id="result">
-        <div class="result-title">완료</div>
-        <div class="result-sub" id="result-sub"></div>
-      </div>
-    </section>
+      <section class="step">
+        <div class="step-num">Step 05</div>
+        <div class="step-title">master session.json 생성</div>
+        <div class="step-desc">고정 PREP 페이지는 그대로 두고, 이 session.json 하나만 배포하면 여러 반과 여러 기간을 함께 운영할 수 있습니다.</div>
+        <button class="btn btn-red" id="generate-btn" type="button" disabled>master session.json 다운로드</button>
+        <div class="result" id="result">
+          <div class="result-title">완료</div>
+          <div class="result-sub" id="result-sub"></div>
+        </div>
+      </section>
+    </div>
   </main>
 </div>
 
