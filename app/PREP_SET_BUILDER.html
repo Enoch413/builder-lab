@@ -2632,6 +2632,9 @@ function normalizeMarkdownRowKeyV2(value = ''){
     .replace(/[^\p{L}\p{N}]/gu, '')
     .toLowerCase();
 }
+function stripMarkdownRowOrderPrefixV2(value = ''){
+  return normalizeMarkdownRowKeyV2(value).replace(/^\d+/, '');
+}
 const MARKDOWN_CIRCLED_NUMBER_MAP_V2 = Object.freeze({
   '①':'1','②':'2','③':'3','④':'4','⑤':'5','⑥':'6','⑦':'7','⑧':'8','⑨':'9','⑩':'10',
   '⑪':'11','⑫':'12','⑬':'13','⑭':'14','⑮':'15','⑯':'16','⑰':'17','⑱':'18','⑲':'19','⑳':'20'
@@ -2764,11 +2767,17 @@ function extractMarkdownTableRowsV2(sectionText = ''){
   return rows;
 }
 function getMarkdownRowValueV2(rowMap = {}, aliases = []){
-  const normalizedRows = new Map(
-    Object.entries(rowMap || {}).map(([key, value]) => [normalizeMarkdownRowKeyV2(key), value])
-  );
+  const normalizedRows = new Map();
+  Object.entries(rowMap || {}).forEach(([key, value]) => {
+    const normalizedKey = normalizeMarkdownRowKeyV2(key);
+    const strippedKey = stripMarkdownRowOrderPrefixV2(key);
+    if(normalizedKey && !normalizedRows.has(normalizedKey)) normalizedRows.set(normalizedKey, value);
+    if(strippedKey && !normalizedRows.has(strippedKey)) normalizedRows.set(strippedKey, value);
+  });
   for(const alias of aliases){
-    const hit = normalizedRows.get(normalizeMarkdownRowKeyV2(alias));
+    const normalizedAlias = normalizeMarkdownRowKeyV2(alias);
+    const strippedAlias = stripMarkdownRowOrderPrefixV2(alias);
+    const hit = normalizedRows.get(normalizedAlias) || normalizedRows.get(strippedAlias);
     if(hit) return hit;
   }
   return '';
