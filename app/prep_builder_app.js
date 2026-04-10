@@ -7,6 +7,7 @@ const DEFAULT_CLASS_CONFIGS = [
 
 let bundleState = createEmptyBundle()
 let rotationImportClassIds = []
+let studySetUiState = {}
 rotationImportClassIds = bundleState.classes.map(function(classInfo){ return classInfo.id })
 
 document.getElementById('load-master-btn').addEventListener('click', function(){
@@ -292,6 +293,80 @@ function getSelectedImportClassIds(){
   return rotationImportClassIds.slice()
 }
 
+function preserveViewport(callback){
+  const scrollTop = window.pageYOffset || document.documentElement.scrollTop || 0
+  callback()
+  window.scrollTo(0, scrollTop)
+}
+
+function getStudySetUiState(studySet){
+  const key = String(studySet && studySet.id || '').trim()
+  if(!key) return { expandedClassIds: [], initialized: true }
+  if(!studySetUiState[key]){
+    studySetUiState[key] = { expandedClassIds: [], initialized: false }
+  }
+  return studySetUiState[key]
+}
+
+function syncStudySetUiState(){
+  const validSetIds = new Set(bundleState.studySets.map(function(studySet){
+    return String(studySet && studySet.id || '').trim()
+  }).filter(Boolean))
+
+  Object.keys(studySetUiState).forEach(function(setId){
+    if(!validSetIds.has(setId)) delete studySetUiState[setId]
+  })
+
+  const validClassIds = new Set(bundleState.classes.map(function(classInfo){
+    return classInfo.id
+  }))
+
+  bundleState.studySets.forEach(function(studySet){
+    const uiState = getStudySetUiState(studySet)
+    const passageCount = Array.isArray(studySet && studySet.passages) ? studySet.passages.length : 0
+    const explicitExpanded = Array.isArray(uiState.expandedClassIds)
+      ? uiState.expandedClassIds.filter(function(classId){
+          return validClassIds.has(classId)
+        })
+      : []
+
+    if(uiState.initialized){
+      uiState.expandedClassIds = explicitExpanded
+      return
+    }
+
+    const assignedExpanded = (studySet.classAssignments || []).filter(function(assignment){
+      return validClassIds.has(assignment.classId)
+        && normalizeNumberList(assignment.passageIndexes, passageCount).length > 0
+    }).map(function(assignment){
+      return assignment.classId
+    })
+
+    uiState.expandedClassIds = assignedExpanded.length
+      ? Array.from(new Set(assignedExpanded))
+      : (bundleState.classes[0] ? [bundleState.classes[0].id] : [])
+    uiState.initialized = true
+  })
+}
+
+function isAssignmentCardExpanded(studySet, classId){
+  return getStudySetUiState(studySet).expandedClassIds.indexOf(classId) >= 0
+}
+
+function toggleAssignmentCard(setIndex, classId){
+  const studySet = bundleState.studySets[setIndex]
+  if(!studySet) return
+
+  const uiState = getStudySetUiState(studySet)
+  const expanded = new Set(uiState.expandedClassIds || [])
+  if(expanded.has(classId)) expanded.delete(classId)
+  else expanded.add(classId)
+  uiState.expandedClassIds = Array.from(expanded)
+  uiState.initialized = true
+
+  preserveViewport(renderSetEditor)
+}
+
 function normalizeClassIdValue(value, index){
   return String(value || '').trim() || ('class-' + (index + 1))
 }
@@ -368,9 +443,11 @@ function removeClassConfig(index){
 function updateClassField(index, field, value){
   if(!bundleState.classes[index]) return
   bundleState.classes[index][field] = value
-  renderImportClassTargets()
-  renderSummary()
-  renderSetEditor()
+  preserveViewport(function(){
+    renderImportClassTargets()
+    renderSummary()
+    renderSetEditor()
+  })
 }
 
 function updateClassId(index, value){
@@ -386,6 +463,14 @@ function updateClassId(index, value){
       return classId === previousId ? nextId : classId
     })
 
+    Object.keys(studySetUiState).forEach(function(setId){
+      const uiState = studySetUiState[setId]
+      if(!uiState || !Array.isArray(uiState.expandedClassIds)) return
+      uiState.expandedClassIds = uiState.expandedClassIds.map(function(classId){
+        return classId === previousId ? nextId : classId
+      })
+    })
+
     bundleState.studySets.forEach(function(studySet){
       studySet.classAssignments = (studySet.classAssignments || []).map(function(assignment){
         if(!assignment || assignment.classId !== previousId) return assignment
@@ -399,19 +484,26 @@ function updateClassId(index, value){
 
   syncRotationImportClassIds(rotationImportClassIds)
   syncAssignments()
-  renderAll()
+  preserveViewport(renderAll)
 }
 
 function removeStudySet(index){
   bundleState.studySets.splice(index, 1)
-  renderAll()
+  preserveViewport(renderAll)
+}
+
+function moveStudySet(index, direction){
+  const nextIndex = index + direction
+  if(index < 0 || nextIndex < 0 || nextIndex >= bundleState.studySets.length) return
+
+  const movedStudySet = bundleState.studySets.splice(index, 1)[0]
+  bundleState.studySets.splice(nextIndex, 0, movedStudySet)
+  preserveViewport(renderAll)
 }
 
 function updateStudySetField(index, field, value){
   if(!bundleState.studySets[index]) return
   bundleState.studySets[index][field] = value
-  renderSummary()
-  renderSetEditor()
 }
 
 function toggleAssignment(setIndex, classId, passageIndex, checked){
@@ -428,8 +520,10 @@ function toggleAssignment(setIndex, classId, passageIndex, checked){
   else valueSet.delete(passageIndex)
 
   assignment.passageIndexes = Array.from(valueSet).sort(function(a, b){ return a - b })
-  renderSummary()
-  renderSetEditor()
+  preserveViewport(function(){
+    renderSummary()
+    renderSetEditor()
+  })
 }
 
 function renderAll(){
@@ -500,7 +594,11 @@ function renderSetEditor(){
     return
   }
 
+  syncStudySetUiState()
+
   document.getElementById('set-editor').innerHTML = bundleState.studySets.map(function(studySet, setIndex){
+    const canMoveUp = setIndex > 0
+    const canMoveDown = setIndex < bundleState.studySets.length - 1
     return '' +
       '<div class="editor-card">' +
         '<div class="editor-head">' +
@@ -508,27 +606,28 @@ function renderSetEditor(){
             '<div class="editor-index">Set ' + (setIndex + 1) + '</div>' +
             '<div class="editor-meta">' + studySet.passages.length + '개 지문 · ' + escapeHtml(studySet.sourceName || '불러온 ROTATION 세션') + '</div>' +
           '</div>' +
-          '<button class="btn btn-ghost btn-sm" type="button" onclick="removeStudySet(' + setIndex + ')">삭제</button>' +
+          '<div class="editor-actions">' +
+            '<button class="btn btn-ghost btn-sm" type="button" onclick="moveStudySet(' + setIndex + ', -1)"' + (canMoveUp ? '' : ' disabled') + '>위</button>' +
+            '<button class="btn btn-ghost btn-sm" type="button" onclick="moveStudySet(' + setIndex + ', 1)"' + (canMoveDown ? '' : ' disabled') + '>아래</button>' +
+            '<button class="btn btn-ghost btn-sm" type="button" onclick="removeStudySet(' + setIndex + ')">삭제</button>' +
+          '</div>' +
         '</div>' +
-        '<div class="row-2">' +
+        '<div class="set-field-stack">' +
           '<div>' +
             '<div class="field-label">세트 제목</div>' +
-            '<input type="text" value="' + escapeAttr(studySet.title) + '" oninput="updateStudySetField(' + setIndex + ', \'title\', this.value)">' +
+            '<input class="set-title-input" type="text" value="' + escapeAttr(studySet.title) + '" oninput="updateStudySetField(' + setIndex + ', \'title\', this.value)">' +
           '</div>' +
-          '<div>' +
-            '<div class="field-label">공개 시작일</div>' +
-            '<input type="date" value="' + escapeAttr(studySet.startDate) + '" oninput="updateStudySetField(' + setIndex + ', \'startDate\', this.value)">' +
+          '<div class="set-date-grid">' +
+            '<div>' +
+              '<div class="field-label">공개 시작일</div>' +
+              '<input type="date" value="' + escapeAttr(studySet.startDate) + '" oninput="updateStudySetField(' + setIndex + ', \'startDate\', this.value)">' +
+            '</div>' +
+            '<div>' +
+              '<div class="field-label">공개 종료일</div>' +
+              '<input type="date" value="' + escapeAttr(studySet.endDate) + '" oninput="updateStudySetField(' + setIndex + ', \'endDate\', this.value)">' +
+            '</div>' +
           '</div>' +
-        '</div>' +
-        '<div class="row-2" style="margin-top:12px">' +
-          '<div>' +
-            '<div class="field-label">공개 종료일</div>' +
-            '<input type="date" value="' + escapeAttr(studySet.endDate) + '" oninput="updateStudySetField(' + setIndex + ', \'endDate\', this.value)">' +
-          '</div>' +
-          '<div>' +
-            '<div class="field-label">안내</div>' +
-            '<div class="hint">둘 다 비워 두면 항상 열립니다. 시작일만 있으면 그날부터 열리고, 종료일만 있으면 그날까지 열립니다.</div>' +
-          '</div>' +
+          '<div class="set-note">둘 다 비워 두면 항상 열립니다.</div>' +
         '</div>' +
         '<div class="assign-list" style="margin-top:14px">' +
           bundleState.classes.map(function(classInfo){
@@ -543,27 +642,31 @@ function renderAssignmentCard(studySet, setIndex, classInfo){
   const assignment = studySet.classAssignments.find(function(item){
     return item.classId === classInfo.id
   }) || { passageIndexes: [] }
+  const expanded = isAssignmentCardExpanded(studySet, classInfo.id)
 
   return '' +
-    '<div class="assign-card">' +
+    '<div class="assign-card' + (expanded ? '' : ' is-collapsed') + '">' +
       '<div class="assign-head">' +
         '<div>' +
           '<div class="assign-name">' + escapeHtml(classInfo.name) + '</div>' +
           '<div class="assign-meta">' + assignment.passageIndexes.length + '개 지문 선택</div>' +
         '</div>' +
+        '<button class="btn btn-ghost btn-sm" type="button" onclick="toggleAssignmentCard(' + setIndex + ', \'' + escapeAttr(classInfo.id) + '\')">' + (expanded ? '접기' : '펼치기') + '</button>' +
       '</div>' +
-      '<div class="passage-grid">' +
-        studySet.passages.map(function(passage, passageIndex){
-          const checked = assignment.passageIndexes.indexOf(passageIndex) >= 0
-          return '' +
-            '<label class="passage-option">' +
-              '<input type="checkbox" ' + (checked ? 'checked ' : '') + 'onchange="toggleAssignment(' + setIndex + ', \'' + escapeAttr(classInfo.id) + '\', ' + passageIndex + ', this.checked)">' +
-              '<div>' +
-                '<div class="passage-title">' + escapeHtml(getPassageTitle(passage, passageIndex)) + '</div>' +
-                '<div class="passage-preview">' + escapeHtml(getPassagePreview(passage)) + '</div>' +
-              '</div>' +
-            '</label>'
-        }).join('') +
+      '<div class="assign-body">' +
+        '<div class="passage-grid">' +
+          studySet.passages.map(function(passage, passageIndex){
+            const checked = assignment.passageIndexes.indexOf(passageIndex) >= 0
+            return '' +
+              '<label class="passage-option">' +
+                '<input type="checkbox" ' + (checked ? 'checked ' : '') + 'onchange="toggleAssignment(' + setIndex + ', \'' + escapeAttr(classInfo.id) + '\', ' + passageIndex + ', this.checked)">' +
+                '<div>' +
+                  '<div class="passage-title">' + escapeHtml(getPassageTitle(passage, passageIndex)) + '</div>' +
+                  '<div class="passage-preview">' + escapeHtml(getPassagePreview(passage)) + '</div>' +
+                '</div>' +
+              '</label>'
+          }).join('') +
+        '</div>' +
       '</div>' +
     '</div>'
 }
