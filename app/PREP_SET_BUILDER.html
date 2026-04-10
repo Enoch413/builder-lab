@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PREP SET BUILDER</title>
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Sans+KR:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=JetBrains+Mono:wght@400;700&family=Lexend:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
 <script src="./embedded_host_bridge.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -297,12 +297,331 @@ textarea{min-height:100px;}
 
 .fade-in{animation:fi .28s ease;}
 @keyframes fi{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+
+/* PINPOINT-style workspace shell */
+:root{
+  --bg:#f7f2ea;
+  --surface:rgba(255,255,255,.92);
+  --card:#f7f4ee;
+  --border:rgba(24,71,72,.08);
+  --ink:#163f42;
+  --ink-light:#5a4a3a;
+  --muted:#8a7a6a;
+  --accent:#163f42;
+  --accent2:#1a5fc8;
+  --green:#1f6c54;
+}
+body{
+  font-family:"Plus Jakarta Sans","Noto Sans KR","Segoe UI",sans-serif;
+  background:
+    radial-gradient(circle at top left, rgba(46,123,105,.14), transparent 32%),
+    radial-gradient(circle at top right, rgba(217,187,139,.22), transparent 28%),
+    linear-gradient(180deg,#f7f2ea 0%,#f0e8dc 52%,#ece4d7 100%);
+  color:var(--ink);
+}
+body::before{
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 240 240' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.16'/%3E%3C/svg%3E");
+  opacity:.28;
+}
+#header{
+  width:min(560px, calc(100% - 36px));
+  margin:8px auto 18px;
+  padding:14px 18px;
+  display:flex;
+  align-items:center;
+  justify-content:flex-start;
+  gap:14px;
+  background:rgba(246,242,234,.88);
+  border:1px solid var(--border);
+  border-radius:0 0 18px 18px;
+  box-shadow:0 10px 24px rgba(30,42,39,.07);
+  backdrop-filter:blur(12px);
+  position:relative;
+  z-index:3;
+}
+#header .header-copy{display:flex;flex-direction:column;gap:2px;min-width:0}
+#header h1{
+  margin:0;
+  font-family:"Lexend","Plus Jakarta Sans",sans-serif;
+  font-size:2rem;
+  font-weight:700;
+  letter-spacing:-.03em;
+  color:var(--ink);
+}
+#header .badge{
+  order:-1;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width:48px;
+  height:42px;
+  padding:0 14px;
+  border-radius:14px;
+  border:1px solid var(--border);
+  background:#fff;
+  box-shadow:0 8px 18px rgba(30,42,39,.06);
+  color:var(--accent);
+  font-family:"Lexend","Plus Jakarta Sans",sans-serif;
+  font-size:10px;
+  font-weight:800;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  white-space:nowrap;
+}
+#setup{
+  max-width:none;
+  margin:0;
+  padding:0 0 28px;
+}
+#setup-shell{
+  width:min(1520px, calc(100% - 40px));
+  margin:0 auto;
+  display:grid;
+  grid-template-columns:minmax(360px, 430px) minmax(0, 1fr);
+  gap:22px;
+  align-items:start;
+}
+#setup-left{
+  padding:16px;
+  border-radius:28px;
+  background:rgba(247,244,238,.9);
+  border:1px solid var(--border);
+  box-shadow:0 18px 34px rgba(30,42,39,.06);
+  backdrop-filter:blur(10px);
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+#setup-right{
+  min-height:360px;
+  display:flex;
+  flex-direction:column;
+  gap:16px;
+}
+.masthead{display:none}
+.workspace-stage{
+  min-height:260px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  padding:36px 24px;
+  text-align:center;
+}
+.workspace-kicker{
+  font-family:"Lexend","Plus Jakarta Sans",sans-serif;
+  font-size:28px;
+  font-weight:700;
+  letter-spacing:-.03em;
+  text-transform:uppercase;
+  color:var(--ink-light);
+}
+.workspace-copy{
+  margin-top:10px;
+  max-width:420px;
+  font-size:12px;
+  line-height:1.75;
+  color:var(--muted);
+}
+#p-stack-shell{
+  display:none;
+  padding:18px;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:22px;
+  box-shadow:0 10px 24px rgba(30,42,39,.05);
+}
+.editor-shell-head{
+  margin-bottom:14px;
+}
+.editor-shell-title{
+  margin-top:6px;
+  font-family:"Lexend","Plus Jakarta Sans",sans-serif;
+  font-size:1rem;
+  font-weight:700;
+  color:var(--ink);
+}
+.editor-shell-copy{
+  margin-top:6px;
+  font-size:12px;
+  line-height:1.75;
+  color:var(--muted);
+}
+.setup-panel,.question-config-panel,.start-bar,.assign-summary,.assign-card,.passage-card,.overall-prog,.stu-banner,.sub-banner{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:22px;
+  box-shadow:0 10px 24px rgba(30,42,39,.05);
+}
+.question-config-panel{display:none !important}
+.setup-panel,.question-config-panel{padding:18px}
+.section-label{
+  font-family:"Lexend","Plus Jakarta Sans",sans-serif;
+  font-size:11px;
+  font-weight:800;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--accent);
+  border-left:none;
+  padding-left:0;
+}
+input[type=text],textarea,input[type=number],.assign-select{
+  border:1.5px solid rgba(23,79,89,.14);
+  border-radius:18px;
+  background:rgba(255,255,255,.96);
+  color:var(--ink);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.8);
+}
+input[type=text]:focus,textarea:focus,input[type=number]:focus{
+  border-color:rgba(26,95,200,.35);
+  box-shadow:0 0 0 4px rgba(26,95,200,.08);
+}
+.btn{
+  border-radius:16px;
+  border:1px solid transparent;
+  font-weight:800;
+}
+.btn-ghost{
+  background:#efe7d8;
+  border-color:rgba(24,71,72,.08);
+  color:var(--ink);
+}
+.btn-ghost:hover{border-color:rgba(24,71,72,.18)}
+.btn-red{background:var(--accent);color:#fff}
+.btn-red:hover{background:#123437}
+.passage-tab-list,.passage-editor-shell{
+  border-color:var(--border);
+  border-radius:20px;
+  background:var(--surface);
+}
+.passage-editor-head,.p-card-header{
+  background:linear-gradient(180deg,#fcfbf7,#faf8f3);
+  border-color:var(--border);
+}
+#setup-right .question-config-panel{margin-top:0}
+#setup-right .start-bar{
+  margin-top:0;
+  padding:18px;
+}
+#assign-screen{
+  width:min(1520px, calc(100% - 40px));
+  max-width:none;
+  margin:0 auto 28px;
+  padding:0;
+}
+.assign-title{
+  font-family:"Lexend","Plus Jakarta Sans",sans-serif;
+  font-size:1.8rem;
+  letter-spacing:-.03em;
+  color:var(--accent);
+  margin-bottom:8px;
+}
+.assign-card{
+  background:linear-gradient(180deg, rgba(247,244,238,.82), rgba(255,255,255,.96));
+}
+.ac-avatar{
+  background:var(--accent);
+  font-family:"Lexend","Plus Jakarta Sans",sans-serif;
+}
+.ac-tag{
+  background:rgba(26,95,200,.08);
+  border-color:rgba(26,95,200,.18);
+  color:var(--accent2);
+}
+.assign-actions{justify-content:flex-start}
+body:has(#class-screen[style*="display: flex"]) #header{display:none}
+#class-screen{background:transparent;min-height:auto;padding-bottom:28px}
+.topbar{
+  width:min(1520px, calc(100% - 40px));
+  margin:0 auto 18px;
+  padding:14px 18px;
+  background:rgba(246,242,234,.88);
+  border:1px solid var(--border);
+  border-radius:0 0 18px 18px;
+  box-shadow:0 10px 24px rgba(30,42,39,.07);
+  backdrop-filter:blur(12px);
+  color:var(--ink);
+}
+.topbar-logo{
+  font-family:"Lexend","Plus Jakarta Sans",sans-serif;
+  font-size:1.6rem;
+  letter-spacing:-.03em;
+  color:var(--accent);
+}
+.topbar-info{gap:10px;flex-wrap:wrap}
+.tstat{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:10px 12px;
+  border-radius:14px;
+  background:#fff;
+  border:1px solid var(--border);
+  color:var(--muted);
+}
+.tstat span{color:var(--ink)}
+.class-body{
+  width:min(1520px, calc(100% - 40px));
+  margin:0 auto;
+  grid-template-columns:minmax(280px, 320px) minmax(0, 1fr);
+  gap:22px;
+}
+.sidebar{
+  border:1px solid var(--border);
+  border-radius:28px;
+  background:rgba(247,244,238,.9);
+  box-shadow:0 18px 34px rgba(30,42,39,.06);
+  border-right:none;
+}
+.main{padding:0;gap:16px}
+.question-card,.vocab-quiz-card{
+  border:1px solid rgba(22,63,66,.18);
+  border-radius:22px;
+  box-shadow:0 10px 24px rgba(30,42,39,.05);
+  background:#173c41;
+}
+.btn-correct{background:var(--green)}
+.btn-wrong{background:#b55033}
+.btn-skip{
+  background:#efe7d8;
+  border-color:rgba(24,71,72,.08);
+  color:var(--ink);
+}
+@media(max-width:980px){
+  #header,#setup-shell,#assign-screen,.topbar,.class-body{width:min(100%, calc(100% - 24px))}
+  #setup-shell,.class-body{grid-template-columns:1fr;gap:18px}
+  #setup-left{padding:14px}
+}
+@media(max-width:640px){
+  #header{
+    padding:12px 14px;
+    border-radius:0 0 16px 16px;
+    gap:12px;
+  }
+  #header h1{font-size:1.45rem}
+  #header .badge{
+    min-width:42px;
+    height:38px;
+    padding:0 12px;
+    border-radius:12px;
+    font-size:9px;
+  }
+}
 </style>
 </head>
 <body>
 
+<div id="header">
+  <div class="header-copy">
+    <h1>PREP SET BUILDER</h1>
+  </div>
+  <div class="badge">WORKSPACE</div>
+</div>
+
 <!-- ══ SETUP ══ -->
 <div id="setup">
+  <div id="setup-shell">
+  <div id="setup-left">
   <div class="masthead"><h1>PREP SET BUILDER</h1></div>
   <div class="setup-cols">
     <!-- 학생 -->
@@ -331,13 +650,26 @@ textarea{min-height:100px;}
         </label>
       </div>
       <div class="empty-note" style="margin-top:6px;">분석본 md를 넣으면 현재 편집 중인 지문이나 기존 지문과 문장·제목이 맞는 항목은 자동 매칭됩니다. 지문 이름은 지문을 추가한 뒤 각 지문 탭 맨 위에서 바꿀 수 있습니다.</div>
-      <div class="p-stack" id="p-stack"></div>
     </div>
+  </div>
+  </div>
+  <div id="setup-right">
+  <div class="workspace-stage" id="setup-empty">
+    <div class="workspace-kicker">READY TO BUILD</div>
+    <div class="workspace-copy">출제 구성과 학생당 지문 배정 방식은 이 영역에서 계속 조정합니다.</div>
   </div>
   <div class="question-config-panel">
     <div class="section-label">③ 출제 / 배정 구성</div>
     <div class="question-config-desc">이번 ROTATION 수업에서 사용할 출제 구성과 학생당 지문 배정 방식을 여기서 한 번에 정합니다.</div>
     <div id="question-config"></div>
+  </div>
+  <div id="p-stack-shell">
+    <div class="editor-shell-head">
+      <div class="section-label">PASSAGE EDITOR</div>
+      <div class="editor-shell-title">지문 편집</div>
+      <div class="editor-shell-copy">지문을 추가하면 이 영역에서 바로 원문, 해석, 문제 포인트를 수정할 수 있습니다.</div>
+    </div>
+    <div class="p-stack" id="p-stack"></div>
   </div>
   <div class="start-bar">
     <span style="font-size:0.76rem;color:var(--muted);">학생 <b id="stu-count">0</b>명 · 지문 <b id="p-count">0</b>개</span>
@@ -349,6 +681,8 @@ textarea{min-height:100px;}
       </label>
       <button class="btn btn-red" style="padding:13px 40px;font-size:0.95rem;border-radius:10px;" onclick="doAssign()">▶ 배정 확인</button>
     </div>
+  </div>
+  </div>
   </div>
   <!-- 토스트 알림 -->
   <div id="toast" style="
@@ -3196,7 +3530,15 @@ function renderSetup(){
     .map(name => `<div class="chip">${htmlEscV2(name)}<button class="chip-x" onclick='removeStudent(${JSON.stringify(name)})'>×</button></div>`)
     .join('');
 
-  document.getElementById('p-stack').innerHTML = passages.length ? `
+  const hasPassages = passages.length > 0;
+  const emptyStage = document.getElementById('setup-empty') || document.querySelector('#setup-right .workspace-stage');
+  const editorShell = document.getElementById('p-stack-shell');
+  const emptyCopy = emptyStage ? emptyStage.querySelector('.workspace-copy') : null;
+  if(emptyCopy) emptyCopy.textContent = '왼쪽에서 지문을 추가하면 이 영역에 바로 지문 편집 창이 열립니다.';
+  if(emptyStage) emptyStage.style.display = hasPassages ? 'none' : 'flex';
+  if(editorShell) editorShell.style.display = hasPassages ? 'block' : 'none';
+
+  document.getElementById('p-stack').innerHTML = hasPassages ? `
     <div class="passage-workspace">
       <div class="passage-tab-list">
         ${passages.map((passage, pi) => `
@@ -3329,6 +3671,12 @@ function renderQuestionConfig(){
   questionConfigMode = normalizeQuestionConfigModeV2(questionConfigMode);
   questionCounts = normalizeQuestionCountsV2(questionCounts);
   assignmentSettings = normalizeAssignmentSettingsV2(assignmentSettings);
+  const configEl = document.getElementById('question-config');
+  if(configEl){
+    configEl.hidden = true;
+    configEl.innerHTML = '';
+  }
+  return;
   const isFixedMode = questionConfigMode === ROTATION_QUESTION_CONFIG_MODES.fixed;
   const items = [
     { id:'topic', label:'주제', hint:'지문당 1문제 고정', count:1, configurable:false },

@@ -6,181 +6,544 @@
 <title>CHECK SET BUILDER</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=JetBrains+Mono:wght@400;700&family=Noto+Sans+KR:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Lexend:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Noto+Sans+KR:wght@400;500;700;800&display=swap" rel="stylesheet">
 <script src="./embedded_host_bridge.js"></script>
 <style>
-:root{--bg:#f5f2eb;--surface:#fff;--card:#faf8f3;--border:#e0dbd0;--ink:#1a1814;--ink2:#3d3a34;--muted:#8a8478;--accent:#1a5fc8;--danger:#c8371a;--green:#1a8c4e}
+:root{
+  --pl-ink:#163f42;
+  --pl-ink-soft:#5a4a3a;
+  --pl-muted:#8a7a6a;
+  --pl-surface:#f7f4ee;
+  --pl-surface-strong:rgba(255,255,255,.92);
+  --pl-line:rgba(24,71,72,.08);
+  --pl-line-strong:rgba(24,71,72,.14);
+  --pl-accent:#163f42;
+  --pl-accent-soft:#efe7d8;
+  --pl-blue:#1a5fc8;
+  --pl-blue-deep:#174fa7;
+  --pl-danger:#b55033;
+  --pl-danger-soft:rgba(181,80,51,.08);
+  --pl-success:#1f6c54;
+  --pl-success-soft:rgba(31,108,84,.1);
+  --pl-shadow:0 18px 34px rgba(30,42,39,.06);
+  --pl-shadow-soft:0 10px 24px rgba(30,42,39,.05);
+}
 *,*::before,*::after{box-sizing:border-box}
 html,body{margin:0;padding:0}
-body{padding:24px;font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--ink)}
-.wrap{max-width:1120px;margin:0 auto}
-.hero{padding:24px;border:1.5px solid var(--border);border-radius:24px;background:rgba(255,255,255,.92);box-shadow:0 18px 42px rgba(26,24,20,.06);margin-bottom:16px}
-.hero-kicker{font-family:'JetBrains Mono',monospace;font-size:.72rem;letter-spacing:1px;color:var(--muted);margin-bottom:8px}
-.hero h1{margin:0 0 10px;font-family:'Bebas Neue',sans-serif;font-size:2.4rem;letter-spacing:1.5px;color:var(--accent)}
-.hero p{margin:0;font-size:.92rem;line-height:1.8;color:var(--ink2)}
-.grid{display:grid;gap:16px}
+body{
+  font-family:"Plus Jakarta Sans","Noto Sans KR","Segoe UI",sans-serif;
+  background:
+    radial-gradient(circle at top left, rgba(46,123,105,.14), transparent 32%),
+    radial-gradient(circle at top right, rgba(217,187,139,.22), transparent 28%),
+    linear-gradient(180deg,#f7f2ea 0%,#f0e8dc 52%,#ece4d7 100%);
+  color:var(--pl-ink);
+  min-height:100vh;
+  position:relative;
+}
+body::before{
+  content:"";
+  position:fixed;
+  inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 240 240' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.16'/%3E%3C/svg%3E");
+  opacity:.28;
+  pointer-events:none;
+  z-index:-2;
+}
+button,input,textarea,select{font:inherit}
+#header{
+  width:min(560px, calc(100% - 36px));
+  margin:8px auto 18px;
+  padding:14px 18px;
+  display:flex;
+  align-items:center;
+  justify-content:flex-start;
+  gap:14px;
+  background:rgba(246,242,234,.88);
+  border:1px solid var(--pl-line);
+  border-radius:0 0 18px 18px;
+  box-shadow:0 10px 24px rgba(30,42,39,.07);
+  backdrop-filter:blur(12px);
+}
+.header-copy{display:flex;flex-direction:column;gap:2px;min-width:0}
+#header h1{
+  margin:0;
+  font-family:"Lexend","Plus Jakarta Sans",sans-serif;
+  font-size:2rem;
+  font-weight:700;
+  letter-spacing:-.03em;
+  color:var(--pl-ink);
+}
+.badge{
+  order:-1;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width:48px;
+  height:42px;
+  padding:0 14px;
+  border-radius:14px;
+  border:1px solid var(--pl-line);
+  background:#fff;
+  box-shadow:0 8px 18px rgba(30,42,39,.06);
+  color:var(--pl-accent);
+  font-family:"Lexend","Plus Jakarta Sans",sans-serif;
+  font-size:10px;
+  font-weight:800;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  white-space:nowrap;
+}
+#layout{
+  width:min(1520px, calc(100% - 40px));
+  margin:0 auto 28px;
+  display:grid;
+  grid-template-columns:minmax(360px, 430px) minmax(0, 1fr);
+  gap:22px;
+  align-items:start;
+}
+#left{
+  padding:16px;
+  border-radius:28px;
+  background:rgba(247,244,238,.9);
+  border:1px solid var(--pl-line);
+  box-shadow:var(--pl-shadow);
+  backdrop-filter:blur(10px);
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+#right{
+  min-height:360px;
+  display:flex;
+  flex-direction:column;
+  gap:16px;
+}
+.left-hero,
+.left-card,
+.content-card,
+.workspace-stage,
+.question-card,
+.status,
+.status.compact,
+.summary-badge,
+.empty{
+  background:var(--pl-surface-strong);
+  border:1px solid var(--pl-line);
+  border-radius:22px;
+  box-shadow:var(--pl-shadow-soft);
+}
+.left-hero{
+  padding:18px 18px 16px;
+  color:var(--pl-ink);
+}
+.left-hero-kicker,
+.input-label,
+.field label,
+.section-title,
+.summary-label{
+  font-family:"Lexend","Plus Jakarta Sans",sans-serif;
+  font-size:11px;
+  font-weight:800;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--pl-accent);
+}
+.left-hero-title{
+  margin-top:8px;
+  font-family:"Lexend","Plus Jakarta Sans",sans-serif;
+  font-size:1.5rem;
+  font-weight:700;
+  letter-spacing:-.03em;
+}
+.left-hero-copy{
+  margin-top:8px;
+  font-size:13px;
+  line-height:1.75;
+  color:var(--pl-muted);
+}
+.left-card,
+.content-card{padding:18px}
+.workspace-stage{
+  min-height:260px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  padding:36px 24px;
+  text-align:center;
+  background:transparent;
+  border:none;
+  box-shadow:none;
+}
+.workspace-kicker{
+  font-family:"Lexend","Plus Jakarta Sans",sans-serif;
+  font-size:28px;
+  font-weight:700;
+  letter-spacing:-.03em;
+  text-transform:uppercase;
+  color:var(--pl-ink-soft);
+}
+.workspace-copy{
+  margin-top:10px;
+  max-width:420px;
+  font-size:12px;
+  line-height:1.75;
+  color:var(--pl-muted);
+}
+.grid{display:grid;gap:14px}
 .grid.two{grid-template-columns:repeat(2,minmax(0,1fr))}
-.card{padding:22px;border:1.5px solid var(--border);border-radius:22px;background:rgba(255,255,255,.92);box-shadow:0 12px 30px rgba(26,24,20,.05)}
-.section-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px}
-.section-title{font-size:1rem;font-weight:900}
-.section-desc{font-size:.82rem;color:var(--muted);line-height:1.7}
+.meta-grid{display:grid;grid-template-columns:1.2fr .8fr;gap:14px}
+.section-head{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+  flex-wrap:wrap;
+  margin-bottom:14px;
+}
+.section-title{font-size:11px}
+.section-name{
+  margin-top:6px;
+  font-size:1rem;
+  font-weight:800;
+  color:var(--pl-ink);
+}
+.section-desc{
+  margin-top:6px;
+  font-size:12px;
+  line-height:1.75;
+  color:var(--pl-muted);
+}
 .row{display:flex;gap:10px;flex-wrap:wrap}
 .field{display:flex;flex-direction:column;gap:8px}
-.field label{font-size:.8rem;font-weight:800;color:var(--ink2)}
-.field input,.field textarea,.field select{width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:14px;background:#fff;font:inherit;color:var(--ink);outline:none;transition:border-color .16s ease, box-shadow .16s ease}
-.field input:focus,.field textarea:focus,.field select:focus{border-color:rgba(26,95,200,.45);box-shadow:0 0 0 4px rgba(26,95,200,.08)}
+.field label{
+  font-size:11px;
+  letter-spacing:.08em;
+}
+.field input,
+.field textarea,
+.field select{
+  width:100%;
+  padding:12px 14px;
+  border:1.5px solid rgba(23,79,89,.14);
+  border-radius:18px;
+  background:rgba(255,255,255,.96);
+  color:var(--pl-ink);
+  outline:none;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.8);
+  transition:border-color .16s ease, box-shadow .16s ease, transform .16s ease;
+}
+.field input:focus,
+.field textarea:focus,
+.field select:focus{
+  border-color:rgba(23,79,89,.35);
+  box-shadow:0 0 0 4px rgba(23,79,89,.08);
+}
 .field textarea{min-height:112px;resize:vertical;line-height:1.7}
 .field input[type="number"]{min-height:48px}
-.btn{appearance:none;border:0;border-radius:14px;padding:11px 16px;font:inherit;font-weight:800;cursor:pointer;transition:transform .14s ease, box-shadow .14s ease, background .14s ease}
+.btn{
+  appearance:none;
+  border:1px solid transparent;
+  border-radius:16px;
+  padding:11px 16px;
+  font:inherit;
+  font-weight:800;
+  cursor:pointer;
+  transition:transform .14s ease, box-shadow .14s ease, background .14s ease, border-color .14s ease;
+}
 .btn:hover{transform:translateY(-1px)}
 .btn:active{transform:translateY(0)}
-.btn-blue{background:linear-gradient(135deg,#1a5fc8,#174fa7);color:#fff;box-shadow:0 12px 26px rgba(26,95,200,.18)}
-.btn-light{background:var(--card);color:var(--ink);border:1.5px solid var(--border)}
-.btn-danger{background:rgba(200,55,26,.08);color:var(--danger);border:1.5px solid rgba(200,55,26,.18)}
-.status{margin-top:12px;padding:14px 16px;border-radius:16px;background:var(--card);border:1.5px solid var(--border);font-size:.84rem;line-height:1.8;color:var(--ink2)}
-.status strong{color:var(--ink)}
-.meta-grid{display:grid;grid-template-columns:1.2fr .8fr;gap:16px}
+.btn-blue{
+  background:linear-gradient(135deg,var(--pl-blue),var(--pl-blue-deep));
+  color:#fff;
+  box-shadow:0 12px 26px rgba(26,95,200,.18);
+}
+.btn-light{
+  background:var(--pl-accent-soft);
+  color:var(--pl-ink);
+  border-color:rgba(24,71,72,.08);
+}
+.btn-danger{
+  background:var(--pl-danger-soft);
+  color:var(--pl-danger);
+  border-color:rgba(181,80,51,.18);
+}
+.status{
+  margin-top:12px;
+  padding:14px 16px;
+  font-size:12px;
+  line-height:1.8;
+  color:var(--pl-ink-soft);
+}
+.status strong{color:var(--pl-ink)}
+.status.compact{
+  margin-top:0;
+  padding:12px 14px;
+  font-size:12px;
+}
+.summary-badge{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:8px 12px;
+  border-radius:999px;
+  background:var(--pl-success-soft);
+  color:var(--pl-success);
+  font-size:12px;
+  font-weight:900;
+}
 .question-list{display:flex;flex-direction:column;gap:16px}
-.question-card{padding:18px;border:1.5px solid var(--border);border-radius:18px;background:linear-gradient(180deg,rgba(250,248,243,.7),rgba(255,255,255,.96))}
-.question-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.question-card{
+  padding:18px;
+  background:linear-gradient(180deg, rgba(247,244,238,.82), rgba(255,255,255,.96));
+}
+.question-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:12px;
+  flex-wrap:wrap;
+  margin-bottom:14px;
+}
 .question-title{display:flex;flex-direction:column;gap:4px}
 .question-title strong{font-size:1rem}
-.question-title span{font-size:.8rem;color:var(--muted)}
+.question-title span{font-size:12px;color:var(--pl-muted)}
 .question-actions{display:flex;gap:8px;flex-wrap:wrap}
 .answer-choice-grid,.type-choice-grid{display:grid;gap:10px}
 .answer-choice-grid{display:flex;gap:10px;flex-wrap:wrap}
 .type-choice-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
-.answer-choice-btn,.type-choice-btn{appearance:none;border:1.5px solid var(--border);border-radius:16px;background:#fff;color:var(--ink);font:inherit;font-weight:900;cursor:pointer;transition:transform .14s ease, border-color .14s ease, background .14s ease, color .14s ease, box-shadow .14s ease}
+.answer-choice-btn,.type-choice-btn{
+  appearance:none;
+  border:1.5px solid rgba(23,79,89,.14);
+  border-radius:16px;
+  background:#fff;
+  color:var(--pl-ink);
+  font:inherit;
+  font-weight:900;
+  cursor:pointer;
+  transition:transform .14s ease, border-color .14s ease, background .14s ease, color .14s ease, box-shadow .14s ease;
+}
 .answer-choice-btn{width:52px;min-width:52px;min-height:52px;font-size:.96rem}
 .type-choice-btn{min-height:48px;font-size:.9rem}
-.answer-choice-btn:hover,.type-choice-btn:hover{transform:translateY(-1px);border-color:rgba(26,95,200,.28)}
-.answer-choice-btn.active,.type-choice-btn.active{background:linear-gradient(135deg,#1a5fc8,#174fa7);border-color:transparent;color:#fff;box-shadow:0 12px 26px rgba(26,95,200,.18)}
-.subjective-note{padding:14px 16px;border:1.5px solid var(--border);border-radius:14px;background:var(--card);font-size:.84rem;line-height:1.8;color:var(--ink2)}
-.subjective-note strong{color:var(--accent)}
-.summary-badge{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;background:rgba(26,140,78,.09);color:var(--green);font-size:.8rem;font-weight:900}
-.empty{padding:32px 18px;border:1.5px dashed var(--border);border-radius:18px;background:var(--card);text-align:center;color:var(--muted);line-height:1.8}
-.quick-build{margin-top:16px;padding-top:16px;border-top:1px solid var(--border)}
-.quick-build-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;align-items:end}
-.quick-build-help{margin-top:10px;font-size:.76rem;color:var(--muted);line-height:1.7}
-.import-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:16px;margin-top:16px;padding-top:16px;border-top:1px solid var(--border)}
-.helper-note{font-size:.76rem;color:var(--muted);line-height:1.75}
-.helper-note strong{color:var(--ink)}
-.status.compact{margin-top:0;padding:12px 14px;font-size:.8rem}
-@media (max-width:860px){.quick-build-grid{grid-template-columns:1fr}}
-@media (max-width:860px){.import-grid{grid-template-columns:1fr}}
-@media (max-width:860px){.grid.two,.meta-grid{grid-template-columns:1fr}}
+.answer-choice-btn:hover,.type-choice-btn:hover{
+  transform:translateY(-1px);
+  border-color:rgba(26,95,200,.28);
+}
+.answer-choice-btn.active,.type-choice-btn.active{
+  background:linear-gradient(135deg,var(--pl-blue),var(--pl-blue-deep));
+  border-color:transparent;
+  color:#fff;
+  box-shadow:0 12px 26px rgba(26,95,200,.18);
+}
+.subjective-note{
+  padding:14px 16px;
+  border:1px solid var(--pl-line);
+  border-radius:16px;
+  background:var(--pl-surface);
+  font-size:12px;
+  line-height:1.8;
+  color:var(--pl-ink-soft);
+}
+.subjective-note strong{color:var(--pl-accent)}
+.empty{
+  padding:32px 18px;
+  border-style:dashed;
+  text-align:center;
+  color:var(--pl-muted);
+  line-height:1.8;
+}
+.quick-build{
+  margin-top:16px;
+  padding-top:16px;
+  border-top:1px solid rgba(24,71,72,.08);
+}
+.quick-build-grid{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:12px;
+  align-items:end;
+}
+.quick-build-help,
+.helper-note{
+  margin-top:10px;
+  font-size:12px;
+  line-height:1.75;
+  color:var(--pl-muted);
+}
+.helper-note strong{color:var(--pl-ink)}
+.helper-note code{
+  font-family:"JetBrains Mono",monospace;
+  font-size:11px;
+  background:rgba(24,71,72,.05);
+  padding:2px 6px;
+  border-radius:999px;
+}
+.import-grid{
+  display:grid;
+  grid-template-columns:1.15fr .85fr;
+  gap:16px;
+  margin-top:16px;
+  padding-top:16px;
+  border-top:1px solid rgba(24,71,72,.08);
+}
+@media (max-width:980px){
+  #header,#layout{width:min(100%, calc(100% - 24px))}
+  #layout{grid-template-columns:1fr;gap:18px}
+  #left{padding:14px}
+  #right{min-height:auto}
+}
+@media (max-width:860px){
+  .grid.two,.meta-grid,.quick-build-grid,.import-grid{grid-template-columns:1fr}
+}
+@media (max-width:640px){
+  #header{
+    padding:12px 14px;
+    border-radius:0 0 16px 16px;
+    gap:12px;
+  }
+  #header h1{font-size:1.45rem}
+  .badge{
+    min-width:42px;
+    height:38px;
+    padding:0 12px;
+    border-radius:12px;
+    font-size:9px;
+  }
+  .left-hero,.left-card,.content-card,.question-card,.status,.empty{border-radius:22px}
+}
 </style>
 </head>
 <body>
-<div class="wrap">
-  <section class="hero">
-    <div class="hero-kicker">CHECK SET BUILDER</div>
+<div id="header">
+  <div class="header-copy">
     <h1>CHECK SET BUILDER</h1>
-  </section>
-
-  <section class="card">
-    <div class="section-head">
-      <div>
-        <div class="section-title">작업 시작</div>
-        <div class="section-desc">기존 CHECK 세트 JSON을 불러와 수정할 수도 있고, 새 세트를 바로 만들 수도 있습니다.</div>
-      </div>
-      <div class="row">
-        <button class="btn btn-light" type="button" id="load-set-btn">기존 세트 불러오기</button>
-        <button class="btn btn-light" type="button" id="add-question-btn">문항 추가</button>
-        <button class="btn btn-blue" type="button" id="download-set-btn">세트 JSON 다운로드</button>
-      </div>
-    </div>
-    <div class="status" id="set-status">
-      <strong>안내:</strong> 세트 제목, 문항 유형, 정답, 해설만 입력하면 됩니다. 객관식은 1~5 버튼으로 정답을 고르고, 주관식은 학생이 답지를 보고 맞음 또는 틀림만 체크하게 됩니다.
-    </div>
-    <div class="quick-build">
-      <div class="quick-build-grid">
-        <div class="field">
-          <label for="objective-count">객관식 문항 수</label>
-          <input id="objective-count" type="number" min="0" step="1" value="0">
-        </div>
-        <div class="field">
-          <label for="subjective-count">주관식 문항 수</label>
-          <input id="subjective-count" type="number" min="0" step="1" value="0">
-        </div>
-        <div class="field">
-          <label for="question-start-number">문항 시작 번호</label>
-          <input id="question-start-number" type="number" min="1" step="1" value="1">
-        </div>
-        <button class="btn btn-light" type="button" id="generate-questions-btn">문항 수대로 자동 만들기</button>
-      </div>
-      <div class="quick-build-help">처음 시작할 때 객관식과 주관식 수를 입력하면 그 수만큼 문항 카드가 한 번에 생성됩니다. 문항 시작 번호를 51로 넣으면 새 세트여도 51번부터 이어서 만들 수 있습니다.</div>
-    </div>
-    <div class="import-grid">
-      <div class="field">
-        <label for="answer-text-input">답지 텍스트 붙여넣기</label>
-        <textarea id="answer-text-input" placeholder="1번&#10;답: ⑤&#10;해설: 해설 내용을 붙여넣으세요.&#10;&#10;2번&#10;답: ③&#10;해설: 다음 해설 내용을 붙여넣으세요."></textarea>
-        <div class="helper-note"><strong>형식:</strong> <code>1번</code> 다음 줄에 <code>답:</code>, 그 다음 줄에 <code>해설:</code> 형식이면 자동 인식합니다. 문항이 없으면 자동 생성하고, 객관식/주관식도 답 형식으로 추정합니다.</div>
-        <div class="row">
-          <button class="btn btn-light" type="button" id="apply-answer-text-btn">답/해설 자동 채우기</button>
-          <button class="btn btn-light" type="button" id="clear-answer-text-btn">붙여넣기 비우기</button>
-        </div>
-      </div>
-      <div class="field">
-        <label>문제유형 PDF 불러오기</label>
-        <div class="status compact" id="problem-type-import-status"><strong>안내:</strong> 문제유형이 적힌 PDF를 올리면 문항 번호 순서대로 자동 매칭합니다.</div>
-        <div class="helper-note"><strong>최신 유형 기준:</strong> PdfProblemTemplateRepacker의 최신 문제유형 목록을 그대로 사용합니다. PDF에서 번호와 유형이 함께 읽히면 정확도가 가장 높습니다.</div>
-        <div class="row">
-          <button class="btn btn-light" type="button" id="load-problem-type-pdf-btn">문제유형 PDF 불러오기</button>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <div class="grid two" style="margin-top:16px">
-    <section class="card">
-      <div class="section-head">
-        <div>
-          <div class="section-title">세트 기본 정보</div>
-          <div class="section-desc">세트 ID는 제목을 기준으로 자동 생성되며, 필요하면 직접 수정할 수 있습니다.</div>
-        </div>
-      </div>
-      <div class="meta-grid">
-        <div class="field">
-          <label for="set-title">세트 제목</label>
-          <input id="set-title" type="text" placeholder="예: 4월 복습 CHECK 세트">
-        </div>
-        <div class="field">
-          <label for="set-id">세트 ID</label>
-          <input id="set-id" type="text" placeholder="예: april-check-01">
-        </div>
-      </div>
-      <div class="field" style="margin-top:14px">
-        <label for="set-description">세트 설명</label>
-        <textarea id="set-description" placeholder="예: 4월 수업 후 복습용 CHECK 답안 세트입니다."></textarea>
-      </div>
-    </section>
-
-    <section class="card">
-      <div class="section-head">
-        <div>
-          <div class="section-title">세트 요약</div>
-          <div class="section-desc">현재 작성한 문항 수와 저장 파일명을 여기서 바로 확인할 수 있습니다.</div>
-        </div>
-      </div>
-      <div class="summary-badge" id="question-summary">총 0문항</div>
-      <div class="status" style="margin-top:14px" id="set-summary-note">
-        <strong>저장 파일명:</strong> <span id="download-file-name">check-set.json</span><br>
-        <strong>문항 구성:</strong> 객관식 0 / 주관식 0
-      </div>
-    </section>
   </div>
+  <div class="badge">WORKSPACE</div>
+</div>
 
-  <section class="card" style="margin-top:16px">
-    <div class="section-head">
-      <div>
-        <div class="section-title">문항 구성</div>
-        <div class="section-desc">학생은 모든 답안을 작성한 뒤 한 번에 제출합니다. 객관식은 1~5 중 하나를 선택하고, 주관식은 답지를 보고 맞음 또는 틀림만 체크하게 됩니다.</div>
-      </div>
-      <button class="btn btn-light" type="button" id="add-question-btn-bottom">문항 추가</button>
+<div id="layout">
+  <aside id="left">
+    <div class="left-hero">
+      <div class="left-hero-kicker">CHECK SET</div>
+      <div class="left-hero-title">문항 세트를 바로 구성하는 워크스페이스</div>
+      <div class="left-hero-copy">세트 메타 정보와 자동 생성 옵션을 먼저 정리한 뒤, 오른쪽에서 문항 카드를 계속 다듬을 수 있습니다.</div>
     </div>
-    <div class="question-list" id="question-list"></div>
-  </section>
+
+    <section class="left-card">
+      <div class="section-head">
+        <div>
+          <div class="section-title">Setup</div>
+          <div class="section-name">작업 시작</div>
+          <div class="section-desc">기존 CHECK 세트를 불러와 이어서 수정하거나, 새 세트를 빠르게 만든 뒤 JSON으로 저장합니다.</div>
+        </div>
+        <div class="row">
+          <button class="btn btn-light" type="button" id="load-set-btn">기존 세트 불러오기</button>
+          <button class="btn btn-light" type="button" id="add-question-btn">문항 추가</button>
+          <button class="btn btn-blue" type="button" id="download-set-btn">세트 JSON 다운로드</button>
+        </div>
+      </div>
+      <div class="status" id="set-status">
+        <strong>안내:</strong> 세트 제목, 문항 유형, 정답, 해설을 입력하면 바로 저장 가능한 CHECK 세트를 만들 수 있습니다.
+      </div>
+      <div class="quick-build">
+        <div class="quick-build-grid">
+          <div class="field">
+            <label for="objective-count">객관식 문항 수</label>
+            <input id="objective-count" type="number" min="0" step="1" value="0">
+          </div>
+          <div class="field">
+            <label for="subjective-count">주관식 문항 수</label>
+            <input id="subjective-count" type="number" min="0" step="1" value="0">
+          </div>
+          <div class="field">
+            <label for="question-start-number">문항 시작 번호</label>
+            <input id="question-start-number" type="number" min="1" step="1" value="1">
+          </div>
+          <button class="btn btn-light" type="button" id="generate-questions-btn">문항 자동 생성</button>
+        </div>
+        <div class="quick-build-help">처음 시작할 때 객관식과 주관식 개수를 넣으면 해당 수만큼 문항 카드가 한 번에 만들어집니다.</div>
+      </div>
+      <div class="import-grid">
+        <div class="field">
+          <label for="answer-text-input">답안 텍스트 붙여넣기</label>
+          <textarea id="answer-text-input" placeholder="1번&#10;정답: 3&#10;해설: 해설 내용을 입력합니다.&#10;&#10;2번&#10;정답: 서술형 답안&#10;해설: 다음 해설 내용을 입력합니다."></textarea>
+          <div class="helper-note"><strong>형식:</strong> 문항 번호 다음 줄에 <code>정답:</code>, 그 다음 줄에 <code>해설:</code> 형태로 넣으면 자동으로 반영됩니다.</div>
+          <div class="row">
+            <button class="btn btn-light" type="button" id="apply-answer-text-btn">답안 자동 반영</button>
+            <button class="btn btn-light" type="button" id="clear-answer-text-btn">붙여넣기 비우기</button>
+          </div>
+        </div>
+        <div class="field">
+          <label>문제 유형 PDF 불러오기</label>
+          <div class="status compact" id="problem-type-import-status"><strong>안내:</strong> PDF에서 문항 번호와 문제 유형을 읽어 현재 세트에 맞춰 연결합니다.</div>
+          <div class="helper-note"><strong>참고:</strong> 문제 유형 표가 선명할수록 자동 인식 정확도가 올라갑니다.</div>
+          <div class="row">
+            <button class="btn btn-light" type="button" id="load-problem-type-pdf-btn">문제 유형 PDF 불러오기</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="grid two">
+      <section class="left-card">
+        <div class="section-head">
+          <div>
+            <div class="section-title">Meta</div>
+            <div class="section-name">세트 기본 정보</div>
+            <div class="section-desc">세트 제목과 ID를 먼저 정하면 다운로드 파일명도 함께 정리됩니다.</div>
+          </div>
+        </div>
+        <div class="meta-grid">
+          <div class="field">
+            <label for="set-title">세트 제목</label>
+            <input id="set-title" type="text" placeholder="예: 4월 복습 CHECK 세트">
+          </div>
+          <div class="field">
+            <label for="set-id">세트 ID</label>
+            <input id="set-id" type="text" placeholder="예: april-check-01">
+          </div>
+        </div>
+        <div class="field" style="margin-top:14px">
+          <label for="set-description">세트 설명</label>
+          <textarea id="set-description" placeholder="세트 설명을 입력합니다."></textarea>
+        </div>
+      </section>
+
+      <section class="left-card">
+        <div class="section-head">
+          <div>
+            <div class="section-title">Summary</div>
+            <div class="section-name">세트 요약</div>
+            <div class="section-desc">현재 구성된 문항 수와 저장 파일명을 바로 확인할 수 있습니다.</div>
+          </div>
+        </div>
+        <div class="summary-badge" id="question-summary">총 0문항</div>
+        <div class="status" style="margin-top:14px" id="set-summary-note">
+          <strong>저장 파일명</strong> <span id="download-file-name">check-set.json</span><br>
+          <strong>문항 구성:</strong> 객관식 0 / 주관식 0
+        </div>
+      </section>
+    </div>
+  </aside>
+
+  <main id="right">
+    <div class="workspace-stage">
+      <div class="workspace-kicker">READY TO BUILD</div>
+      <div class="workspace-copy">문항 구성은 이 영역에서 계속 편집합니다. 왼쪽 설정을 바꿔도 기존 카드 구조는 그대로 유지됩니다.</div>
+    </div>
+
+    <section class="content-card">
+      <div class="section-head">
+        <div>
+          <div class="section-title">Editor</div>
+          <div class="section-name">문항 구성</div>
+          <div class="section-desc">객관식은 1~5 중 정답을 선택하고, 주관식은 답안과 해설을 함께 저장합니다.</div>
+        </div>
+        <button class="btn btn-light" type="button" id="add-question-btn-bottom">문항 추가</button>
+      </div>
+      <div class="question-list" id="question-list"></div>
+    </section>
+  </main>
 </div>
 
 <input id="set-file-input" type="file" accept=".json" hidden>
