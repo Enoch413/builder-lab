@@ -489,6 +489,44 @@ input[type=text]:focus,textarea:focus,input[type=number]:focus{
 .btn-ghost:hover{border-color:rgba(24,71,72,.18)}
 .btn-red{background:var(--accent);color:#fff}
 .btn-red:hover{background:#123437}
+.btn-deep{
+  background:var(--accent);
+  color:#fff;
+  border-color:transparent;
+  box-shadow:0 12px 26px rgba(22,63,66,.18);
+}
+.btn-deep:hover{
+  background:#123437;
+  transform:translateY(-1px);
+}
+.setup-action-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:10px;
+  margin-top:12px;
+}
+.setup-action-grid .btn{
+  width:100%;
+  justify-content:center;
+  min-height:44px;
+  border-radius:16px;
+  padding:11px 16px;
+  font-size:0.82rem;
+}
+.setup-count-row{
+  display:flex;
+  justify-content:flex-end;
+  align-items:flex-end;
+  margin-top:10px;
+}
+.setup-count-note{
+  font-size:0.76rem;
+  color:var(--muted);
+  text-align:right;
+}
+@media(max-width:680px){
+  .setup-action-grid{grid-template-columns:1fr;}
+}
 .passage-tab-list,.passage-editor-shell{
   border-color:var(--border);
   border-radius:20px;
@@ -637,20 +675,20 @@ body:has(#class-screen[style*="display: flex"]) #header{display:none}
       <textarea id="p-input" placeholder="문장마다 줄바꿈해서 넣어 주세요."></textarea>
       <label class="fl">전체 해석 붙여넣기</label>
       <textarea id="p-translation-input" placeholder="해석도 원문과 같은 줄 순서로 넣어 주세요." style="min-height:88px;"></textarea>
-      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:6px;">
-        <button class="btn btn-ghost btn-sm" onclick="addPassage()">+ 지문 추가</button>
-        <label class="btn btn-ghost btn-sm" style="cursor:pointer;margin:0;" title="분석본 md 파일에서 주제, 서술형 문장, 어휘 포인트를 자동으로 가져옵니다">
-          + 분석본 md 추가
+      <div class="setup-action-grid">
+        <button class="btn btn-deep btn-sm" onclick="addPassage()">지문 추가</button>
+        <label class="btn btn-deep btn-sm" style="cursor:pointer;margin:0;" title="분석본 md 파일에서 주제, 서술형 문장, 어휘 포인트를 자동으로 가져옵니다">
+          분석본 md 추가
           <input type="file" accept=".md,.markdown,text/markdown,text/plain" multiple onchange="importMarkdownFiles(event)" style="display:none;">
         </label>
-      </div>
-      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:14px;">
-        <button class="btn btn-ghost btn-sm" onclick="saveSession()" title="현재 지문 구성과 세션 정보를 JSON 파일로 저장합니다">💾 세션 저장</button>
-        <label class="btn btn-ghost btn-sm" style="cursor:pointer;margin:0;" title="저장했던 세션 JSON 파일을 불러옵니다">
-          📂 세션 불러오기
+        <button class="btn btn-deep btn-sm" onclick="saveSession()" title="현재 지문 구성과 세션 정보를 JSON 파일로 저장합니다">세션 저장</button>
+        <label class="btn btn-deep btn-sm" style="cursor:pointer;margin:0;" title="저장했던 세션 JSON 파일을 불러옵니다">
+          세션 불러오기
           <input type="file" accept=".json" onchange="loadSession(event)" style="display:none;">
         </label>
-        <span style="font-size:0.76rem;color:var(--muted);">지문 <b id="p-count">0</b>개</span>
+      </div>
+      <div class="setup-count-row">
+        <span class="setup-count-note">지문 <b id="p-count">0</b>개</span>
       </div>
     </div>
   </div>
