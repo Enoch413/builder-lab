@@ -43,7 +43,7 @@ body::before{
   line-height:1.8;
   color:var(--ink2);
 }
-.tabbar{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:14px}
+.tabbar{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:14px}
 .tab-btn{
   display:flex;
   flex-direction:column;
@@ -119,17 +119,9 @@ iframe{
       <span class="tab-kicker">TAB 01</span>
       <span class="tab-title">PREP SET BUILDER</span>
     </button>
-    <button class="tab-btn" type="button" data-panel="prep-master-panel">
-      <span class="tab-kicker">TAB 02</span>
-      <span class="tab-title">PREP MASTER BUILDER</span>
-    </button>
     <button class="tab-btn" type="button" data-panel="check-set-panel">
-      <span class="tab-kicker">TAB 03</span>
+      <span class="tab-kicker">TAB 02</span>
       <span class="tab-title">CHECK SET BUILDER</span>
-    </button>
-    <button class="tab-btn" type="button" data-panel="check-master-panel">
-      <span class="tab-kicker">TAB 04</span>
-      <span class="tab-title">CHECK MASTER BUILDER</span>
     </button>
   </div>
 
@@ -144,17 +136,6 @@ iframe{
     </div>
   </section>
 
-  <section class="panel" id="prep-master-panel">
-    <div class="frame-shell">
-      <div class="frame-toolbar">
-        <div>
-          <div class="frame-title">PREP MASTER BUILDER</div>
-        </div>
-      </div>
-      <iframe src="./PREP_MASTER_BUILDER.html" title="PREP MASTER SESSION"></iframe>
-    </div>
-  </section>
-
   <section class="panel" id="check-set-panel">
     <div class="frame-shell">
       <div class="frame-toolbar">
@@ -163,17 +144,6 @@ iframe{
         </div>
       </div>
       <iframe src="./CHECK_SET_BUILDER.html" title="CHECK SET"></iframe>
-    </div>
-  </section>
-
-  <section class="panel" id="check-master-panel">
-    <div class="frame-shell">
-      <div class="frame-toolbar">
-        <div>
-          <div class="frame-title">CHECK MASTER BUILDER</div>
-        </div>
-      </div>
-      <iframe src="./CHECK_MASTER_BUILDER.html" title="CHECK MASTER BUILDER"></iframe>
     </div>
   </section>
 </div>

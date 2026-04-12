@@ -4784,5 +4784,17 @@ function buildSetupPassageEditorV5(pi){
 }
 renderSetup({ preserveView:false, focusKey:null });
 </script>
+<script>
+function buildReadonlyDisplayHtmlV2(value, className = '', emptyText = '자동으로 가져온 값이 없습니다.'){
+  const content = String(value || '').trim();
+  const classes = ['readonly-display'];
+  if(className) classes.push(className);
+  const body = content
+    ? htmlEscV2(content).replace(/\n/g, '<br>')
+    : `<span class="empty-note">${htmlEscV2(emptyText)}</span>`;
+  return `<div class="${classes.join(' ')}">${body}</div>`;
+}
+renderSetup({ preserveView:false, focusKey:null });
+</script>
 </body>
 </html>
