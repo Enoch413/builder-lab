@@ -70,6 +70,36 @@ textarea{min-height:100px;}
 .passage-source-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;}
 .passage-source-card{background:var(--card);border:1.5px solid var(--border);border-radius:12px;padding:12px;}
 .passage-source-input{min-height:220px;}
+.readonly-display{
+  width:100%;
+  min-height:48px;
+  padding:11px 13px;
+  background:rgba(26,24,20,.03);
+  border:1.5px solid var(--border);
+  border-radius:10px;
+  color:var(--ink);
+  font-size:0.84rem;
+  line-height:1.8;
+  white-space:pre-wrap;
+  word-break:break-word;
+}
+.readonly-display.source{min-height:220px;}
+.readonly-display.compact{min-height:0}
+.setup-import-note{
+  margin-top:10px;
+  font-size:0.78rem;
+  line-height:1.7;
+  color:var(--muted);
+}
+.readonly-cell{
+  min-height:40px;
+  padding:7px 10px;
+  font-size:0.82rem;
+  line-height:1.6;
+  color:var(--ink);
+  white-space:pre-wrap;
+  word-break:break-word;
+}
 .passage-empty{background:var(--surface);border:1.5px dashed var(--border);border-radius:12px;padding:24px;color:var(--muted);font-size:0.86rem;line-height:1.7;}
 @media(max-width:920px){
   .passage-workspace{grid-template-columns:1fr;}
@@ -671,15 +701,10 @@ body:has(#class-screen[style*="display: flex"]) #header{display:none}
     <!-- 지문 -->
     <div class="setup-panel">
       <div class="section-label">시험범위 지문</div>
-      <label class="fl">지문 원문 붙여넣기</label>
-      <textarea id="p-input" placeholder="문장마다 줄바꿈해서 넣어 주세요."></textarea>
-      <label class="fl">전체 해석 붙여넣기</label>
-      <textarea id="p-translation-input" placeholder="해석도 원문과 같은 줄 순서로 넣어 주세요." style="min-height:88px;"></textarea>
       <div class="setup-action-grid">
-        <button class="btn btn-deep btn-sm" onclick="addPassage()">지문 추가</button>
-        <label class="btn btn-deep btn-sm" style="cursor:pointer;margin:0;" title="분석본 md 파일에서 주제, 서술형 문장, 어휘 포인트를 자동으로 가져옵니다">
-          분석본 md 추가
-          <input type="file" accept=".md,.markdown,text/markdown,text/plain" multiple onchange="importMarkdownFiles(event)" style="display:none;">
+        <label class="btn btn-deep btn-sm" style="cursor:pointer;margin:0;" title="MASTER_ANALYSIS.json 또는 분석 JSON을 불러와 지문 편집 화면에 자동으로 채웁니다">
+          분석 JSON 추가
+          <input type="file" accept=".json,application/json" multiple onchange="importAnalysisJsonFiles(event)" style="display:none;">
         </label>
         <button class="btn btn-deep btn-sm" onclick="saveSession()" title="현재 지문 구성과 세션 정보를 JSON 파일로 저장합니다">세션 저장</button>
         <label class="btn btn-deep btn-sm" style="cursor:pointer;margin:0;" title="저장했던 세션 JSON 파일을 불러옵니다">
@@ -687,6 +712,7 @@ body:has(#class-screen[style*="display: flex"]) #header{display:none}
           <input type="file" accept=".json" onchange="loadSession(event)" style="display:none;">
         </label>
       </div>
+      <div class="setup-import-note">JSON에서 원문, 해석, 주제, 어휘를 자동으로 가져옵니다. 오른쪽 편집 영역에서는 어법 포인트만 추가하면 됩니다.</div>
       <div class="setup-count-row">
         <span class="setup-count-note">지문 <b id="p-count">0</b>개</span>
       </div>
@@ -706,7 +732,7 @@ body:has(#class-screen[style*="display: flex"]) #header{display:none}
     <div class="editor-shell-head">
       <div class="section-label">PASSAGE EDITOR</div>
       <div class="editor-shell-title">지문 편집</div>
-      <div class="editor-shell-copy">지문을 추가하면 이 영역에서 바로 원문, 해석, 문제 포인트를 수정할 수 있습니다.</div>
+      <div class="editor-shell-copy">JSON에서 자동으로 채워진 지문을 검토하고 어법 포인트만 추가할 수 있습니다.</div>
     </div>
     <div class="p-stack" id="p-stack"></div>
   </div>
@@ -3216,6 +3242,144 @@ function readFileAsTextV2(file){
     reader.readAsText(file);
   });
 }
+function isPlainObjectV2(value){
+  return !!value && typeof value === 'object' && !Array.isArray(value);
+}
+function getObjectValueByKeysV2(source, keys = []){
+  if(!isPlainObjectV2(source)) return undefined;
+  for(const key of keys){
+    if(Object.prototype.hasOwnProperty.call(source, key) && source[key] != null){
+      return source[key];
+    }
+  }
+  return undefined;
+}
+function normalizeAnalysisSentenceEntryV2(entry = {}){
+  const english = String(getObjectValueByKeysV2(entry, ['영어', '원문', 'english', 'English', 'text', 'sentence']) || '').trim();
+  const translation = String(getObjectValueByKeysV2(entry, ['한국어', '해석', 'translation', 'Translation', 'korean']) || '').trim();
+  const number = String(getObjectValueByKeysV2(entry, ['번호', 'number', 'num']) || '').trim();
+  if(!english && !translation) return null;
+  return { number, english, translation };
+}
+function collectAnalysisSentenceEntriesV2(node, bucket = []){
+  if(Array.isArray(node)){
+    node.forEach(item => collectAnalysisSentenceEntriesV2(item, bucket));
+    return bucket;
+  }
+  if(!node || typeof node !== 'object') return bucket;
+  const normalized = normalizeAnalysisSentenceEntryV2(node);
+  if(normalized){
+    bucket.push(normalized);
+    return bucket;
+  }
+  Object.values(node).forEach(value => collectAnalysisSentenceEntriesV2(value, bucket));
+  return bucket;
+}
+function resolveAnalysisSentenceEntriesV2(source = {}){
+  const directSource = getObjectValueByKeysV2(source, ['03', '지문', '문장', 'sentences', 'sentenceList']);
+  const directEntries = collectAnalysisSentenceEntriesV2(directSource, []);
+  if(directEntries.length) return directEntries;
+  return collectAnalysisSentenceEntriesV2(source, []);
+}
+function normalizeAnalysisVocabRowV2(entry = {}){
+  const normalized = normalizeVocabRowV2({
+    word:getObjectValueByKeysV2(entry, ['단어', '원형', 'word']),
+    meaning:getObjectValueByKeysV2(entry, ['뜻', '의미', 'meaning', 'mean']),
+    syn:getObjectValueByKeysV2(entry, ['동의어', 'syn', 'synonym']),
+    ant:getObjectValueByKeysV2(entry, ['반의어', 'ant', 'antonym']),
+    antMeaning:getObjectValueByKeysV2(entry, ['반의어_뜻', '반의어뜻', 'antMeaning', 'ant_meaning'])
+  });
+  return Object.values(normalized).some(Boolean) ? normalized : null;
+}
+function resolveAnalysisVocabRowsV2(source = {}){
+  const vocabSource = getObjectValueByKeysV2(source, ['어휘', 'vocab', 'vocabulary']);
+  return (Array.isArray(vocabSource) ? vocabSource : [])
+    .map(normalizeAnalysisVocabRowV2)
+    .filter(Boolean);
+}
+function resolveAnalysisTopicV2(source = {}){
+  return String(
+    getObjectValueByKeysV2(source, ['주제', 'topic', '요지', 'gist', '한_문장_요약', 'summary', '제목', 'title', '전체_내용'])
+    || ''
+  ).trim();
+}
+function resolveAnalysisPassageTitleV2(source = {}, fileName = '', index = 0){
+  const explicitTitle = String(getObjectValueByKeysV2(source, ['제목', 'title', 'name']) || '').trim();
+  if(explicitTitle) return explicitTitle;
+  const passageNumber = String(getObjectValueByKeysV2(source, ['번호', 'number', 'num']) || '').trim();
+  const baseTitle = stripFileExtensionV2(fileName) || '분석 JSON';
+  return passageNumber ? `${baseTitle} 지문 ${passageNumber}` : `${baseTitle} 지문 ${index + 1}`;
+}
+function buildPassageFromAnalysisSourceV2(source = {}, fileName = '', index = 0){
+  const sentenceEntries = resolveAnalysisSentenceEntriesV2(source).filter(entry => entry.english);
+  if(!sentenceEntries.length) return null;
+  const text = sentenceEntries.map(entry => entry.english).join('\n').trim();
+  if(!text) return null;
+  const translationText = sentenceEntries.map(entry => entry.translation).join('\n').trim();
+  const selectedLines = sentenceEntries.map((_, lineIndex) => lineIndex);
+  const vocabRows = resolveAnalysisVocabRowsV2(source);
+  const topic = resolveAnalysisTopicV2(source);
+  return normalizePassageV2({
+    title:resolveAnalysisPassageTitleV2(source, fileName, index),
+    text,
+    translationText,
+    selectedLines,
+    grammarSelections:[],
+    vocabRows,
+    questionAnswers:createQuestionAnswersV2({ topic })
+  });
+}
+function extractAnalysisPassagesFromJsonV2(data, fileName = ''){
+  const passageSources = Array.isArray(data?.PASSAGES)
+    ? data.PASSAGES
+    : Array.isArray(data?.passages)
+      ? data.passages
+      : Array.isArray(data)
+        ? data
+        : [data];
+  return passageSources
+    .map((source, index) => buildPassageFromAnalysisSourceV2(source, fileName, index))
+    .filter(Boolean);
+}
+async function importAnalysisJsonFiles(event){
+  const files = Array.from(event?.target?.files || []);
+  if(!files.length) return;
+  let importedPassageCount = 0;
+  let parsedFileCount = 0;
+  const skippedFiles = [];
+  let lastTouchedPassage = -1;
+
+  for(const file of files){
+    try{
+      const raw = await readFileAsTextV2(file);
+      const data = JSON.parse(raw);
+      const importedPassages = extractAnalysisPassagesFromJsonV2(data, file.name);
+      if(!importedPassages.length){
+        skippedFiles.push(file.name);
+        continue;
+      }
+      passages.push(...importedPassages);
+      importedPassageCount += importedPassages.length;
+      parsedFileCount += 1;
+      lastTouchedPassage = passages.length - 1;
+    }catch(error){
+      skippedFiles.push(file.name);
+    }
+  }
+
+  event.target.value = '';
+
+  if(!importedPassageCount){
+    showToast('분석 JSON에서 가져올 지문을 찾지 못했습니다. PASSAGES / 03 / 지문 구조를 확인해 주세요.');
+    return;
+  }
+
+  openSetupPassage = lastTouchedPassage;
+  renderSetup({ preserveView:false, focusKey:null });
+
+  const skippedText = skippedFiles.length ? ` · 건너뜀 ${skippedFiles.length}개` : '';
+  showToast(`분석 JSON 가져오기 완료 · 파일 ${parsedFileCount}개 / 지문 ${importedPassageCount}개${skippedText}`, 'var(--green)');
+}
 async function importMarkdownFiles(event){
   const files = Array.from(event?.target?.files || []);
   if(!files.length) return;
@@ -4171,6 +4335,454 @@ function loadSession(event){
 }
 normalizeAllSetupStateV2();
 renderSetup();
+</script>
+<script>
+function isPlainObjectV2(value){
+  return !!value && typeof value === 'object' && !Array.isArray(value);
+}
+function getObjectValueByKeysV2(source, keys = []){
+  if(!isPlainObjectV2(source)) return undefined;
+  for(const key of keys){
+    if(Object.prototype.hasOwnProperty.call(source, key) && source[key] != null){
+      return source[key];
+    }
+  }
+  return undefined;
+}
+function normalizeAnalysisSentenceEntryV2(entry = {}){
+  if(!isPlainObjectV2(entry)) return null;
+  const english = String(getObjectValueByKeysV2(entry, ['영어', '원문', '지문', 'text', 'sentence', 'english', 'English']) || '').trim();
+  const translation = String(getObjectValueByKeysV2(entry, ['한국어', '해석', '번역', 'translation', 'Translation', 'korean', 'Korean']) || '').trim();
+  const number = String(getObjectValueByKeysV2(entry, ['번호', '문장번호', 'number', 'num', 'id']) || '').trim();
+  if(!english && !translation) return null;
+  return { number, english, translation };
+}
+function collectAnalysisSentenceEntriesV2(node, bucket = []){
+  if(Array.isArray(node)){
+    node.forEach(item => collectAnalysisSentenceEntriesV2(item, bucket));
+    return bucket;
+  }
+  if(!isPlainObjectV2(node)) return bucket;
+  const normalized = normalizeAnalysisSentenceEntryV2(node);
+  if(normalized){
+    bucket.push(normalized);
+    return bucket;
+  }
+  Object.values(node).forEach(value => collectAnalysisSentenceEntriesV2(value, bucket));
+  return bucket;
+}
+function resolveAnalysisSentenceEntriesV2(source = {}){
+  const directSource = getObjectValueByKeysV2(source, ['03', '3', '지문', '문장', 'sentences', 'sentenceList']);
+  const directEntries = collectAnalysisSentenceEntriesV2(directSource, []);
+  if(directEntries.length) return directEntries;
+  return collectAnalysisSentenceEntriesV2(source, []);
+}
+function normalizeAnalysisVocabRowV2(entry = {}){
+  if(!isPlainObjectV2(entry)) return null;
+  const normalized = normalizeVocabRowV2({
+    word:getObjectValueByKeysV2(entry, ['단어', '어휘', 'word']),
+    meaning:getObjectValueByKeysV2(entry, ['뜻', '의미', 'meaning', 'mean']),
+    syn:getObjectValueByKeysV2(entry, ['동의어', 'syn', 'synonym']),
+    ant:getObjectValueByKeysV2(entry, ['반의어', 'ant', 'antonym']),
+    antMeaning:getObjectValueByKeysV2(entry, ['반의어_뜻', '반의어뜻', 'antMeaning', 'ant_meaning'])
+  });
+  return Object.values(normalized).some(Boolean) ? normalized : null;
+}
+function resolveAnalysisVocabRowsV2(source = {}){
+  const vocabSource = getObjectValueByKeysV2(source, ['어휘', 'vocab', 'vocabulary']);
+  return (Array.isArray(vocabSource) ? vocabSource : [])
+    .map(normalizeAnalysisVocabRowV2)
+    .filter(Boolean);
+}
+function resolveAnalysisTopicV2(source = {}){
+  return String(
+    getObjectValueByKeysV2(source, ['주제', 'topic', '요지', 'gist', '한_문장_요약', 'summary', '제목', 'title', '전체_내용'])
+    || ''
+  ).trim();
+}
+function resolveAnalysisPassageTitleV2(source = {}, fileName = '', index = 0){
+  const explicitTitle = String(getObjectValueByKeysV2(source, ['제목', 'title', 'name']) || '').trim();
+  if(explicitTitle) return explicitTitle;
+  const passageNumber = String(getObjectValueByKeysV2(source, ['번호', 'number', 'num']) || '').trim();
+  const baseTitle = stripFileExtensionV2(fileName) || '분석 JSON';
+  return passageNumber ? `${baseTitle} 지문 ${passageNumber}` : `${baseTitle} 지문 ${index + 1}`;
+}
+function buildPassageFromAnalysisSourceV2(source = {}, fileName = '', index = 0){
+  const sentenceEntries = resolveAnalysisSentenceEntriesV2(source).filter(entry => entry.english);
+  if(!sentenceEntries.length) return null;
+  const text = sentenceEntries.map(entry => entry.english).join('\n').trim();
+  if(!text) return null;
+  const translationText = sentenceEntries.map(entry => entry.translation).join('\n').trim();
+  const selectedLines = sentenceEntries
+    .map((entry, lineIndex) => entry.translation ? lineIndex : -1)
+    .filter(lineIndex => lineIndex >= 0);
+  const vocabRows = resolveAnalysisVocabRowsV2(source);
+  const topic = resolveAnalysisTopicV2(source) || resolveAnalysisPassageTitleV2(source, fileName, index);
+  return normalizePassageV2({
+    title:resolveAnalysisPassageTitleV2(source, fileName, index),
+    text,
+    translationText,
+    selectedLines,
+    grammarSelections:[],
+    vocabRows,
+    questionAnswers:createQuestionAnswersV2({ topic })
+  });
+}
+function extractAnalysisPassagesFromJsonV2(data, fileName = ''){
+  const passageSources = Array.isArray(data?.PASSAGES)
+    ? data.PASSAGES
+    : Array.isArray(data?.passages)
+      ? data.passages
+      : Array.isArray(data)
+        ? data
+        : [data];
+  return passageSources
+    .map((source, index) => buildPassageFromAnalysisSourceV2(source, fileName, index))
+    .filter(Boolean);
+}
+async function importAnalysisJsonFiles(event){
+  const files = Array.from(event?.target?.files || []);
+  if(!files.length) return;
+  let importedPassageCount = 0;
+  let parsedFileCount = 0;
+  const skippedFiles = [];
+  let lastTouchedPassage = -1;
+
+  for(const file of files){
+    try{
+      const raw = await readFileAsTextV2(file);
+      const data = JSON.parse(String(raw || '').replace(/^\uFEFF/, ''));
+      const importedPassages = extractAnalysisPassagesFromJsonV2(data, file.name);
+      if(!importedPassages.length){
+        skippedFiles.push(file.name);
+        continue;
+      }
+      passages.push(...importedPassages);
+      importedPassageCount += importedPassages.length;
+      parsedFileCount += 1;
+      lastTouchedPassage = passages.length - 1;
+    }catch(error){
+      skippedFiles.push(file.name);
+    }
+  }
+
+  event.target.value = '';
+
+  if(!importedPassageCount){
+    showToast('분석 JSON에서 가져올 지문을 찾지 못했습니다. PASSAGES 또는 03/지문/문장 구조를 확인해 주세요.');
+    return;
+  }
+
+  openSetupPassage = lastTouchedPassage;
+  renderSetup({ preserveView:false, focusKey:null });
+
+  const skippedText = skippedFiles.length ? ` · 건너뜀 ${skippedFiles.length}개` : '';
+  showToast(`분석 JSON 가져오기 완료 · 파일 ${parsedFileCount}개 / 지문 ${importedPassageCount}개${skippedText}`, 'var(--green)');
+}
+function buildReadonlyDisplayHtmlV2(value, className = '', emptyText = '자동으로 가져온 값이 없습니다.'){
+  const content = String(value || '').trim();
+  const classes = ['readonly-display'];
+  if(className) classes.push(className);
+  return `
+    <div class="${classes.join(' ')}">
+      ${content ? htmlEscV2(content).replace(/\n/g, '<br>') : `<span class="empty-note">${htmlEscV2(emptyText)}</span>`}
+    </div>
+  `;
+}
+function buildVocabRows(pi){
+  const rows = Array.isArray(passages[pi]?.vocabRows) ? passages[pi].vocabRows : [];
+  if(!rows.length){
+    return `
+      <tr>
+        <td colspan="6">
+          <div class="empty-note" style="padding:12px 14px;">JSON에서 가져온 어휘가 없습니다.</div>
+        </td>
+      </tr>
+    `;
+  }
+  return rows.map(row => `
+    <tr>
+      <td><div class="readonly-cell">${row.word ? htmlEscV2(row.word) : '<span class="empty-note">-</span>'}</div></td>
+      <td><div class="readonly-cell">${row.meaning ? htmlEscV2(row.meaning) : '<span class="empty-note">-</span>'}</div></td>
+      <td><div class="readonly-cell">${row.syn ? htmlEscV2(row.syn) : '<span class="empty-note">-</span>'}</div></td>
+      <td><div class="readonly-cell">${row.ant ? htmlEscV2(row.ant) : '<span class="empty-note">-</span>'}</div></td>
+      <td><div class="readonly-cell">${row.antMeaning ? htmlEscV2(row.antMeaning) : '<span class="empty-note">-</span>'}</div></td>
+      <td class="vocab-action-cell"><div class="readonly-cell" style="text-align:center;font-weight:700;color:var(--muted);">자동</div></td>
+    </tr>
+  `).join('');
+}
+function buildQuestionAnswerFieldsV2(pi){
+  const topic = String(passages[pi]?.questionAnswers?.topic || '').trim();
+  return `
+    <div class="selected-answer-list">
+      <div class="selected-answer-item">
+        <div class="selected-answer-title">주제 답안</div>
+        ${buildReadonlyDisplayHtmlV2(topic, 'compact', 'JSON에서 가져온 주제 정보가 없습니다.')}
+      </div>
+    </div>
+  `;
+}
+function buildSetupPassageEditorV5(pi){
+  const passage = passages[pi];
+  const sourceLineCount = getPassageLinesV3(passage).length;
+  const translationLineCount = getTranslationLinesV3(passage).length;
+  const selectedCount = getValidSelectedLinesV3(passage).length;
+  return `
+    <div class="passage-editor-shell">
+      <div class="passage-editor-head">
+        <div>
+          <div class="passage-editor-title">${htmlEscV2(getPassageDisplayNameV2(passage, pi))}</div>
+          <div class="passage-editor-meta">
+            JSON 자동 입력 · 원문 ${sourceLineCount}줄 · 해석 ${translationLineCount}줄 · 자동 연결 ${selectedCount}문장
+            <br>원문, 해석, 주제, 어휘는 JSON에서 자동으로 채워집니다. 이 편집 영역에서는 어법 포인트만 추가하면 됩니다.
+          </div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="removePassage(${pi})">이 지문 삭제</button>
+      </div>
+      <div class="passage-editor-body">
+        <div class="passage-source-grid">
+          <div class="passage-source-card" style="grid-column:1 / -1;">
+            <div class="mini-label">지문 이름</div>
+            ${buildReadonlyDisplayHtmlV2(getPassageDisplayNameV2(passage, pi), 'compact', '지문 이름이 없습니다.')}
+          </div>
+          <div class="passage-source-card">
+            <div class="mini-label">원문</div>
+            ${buildReadonlyDisplayHtmlV2(passage.text, 'source', 'JSON에서 가져온 원문이 없습니다.')}
+          </div>
+          <div class="passage-source-card">
+            <div class="mini-label">해석</div>
+            ${buildReadonlyDisplayHtmlV2(passage.translationText, 'source', 'JSON에서 가져온 해석이 없습니다.')}
+          </div>
+        </div>
+        <div>
+          <div class="mini-label">문장 해석 자동 연결</div>
+          <div class="status-inline" style="margin-bottom:8px;">JSON에서 가져온 문장과 해석을 같은 순서로 자동 연결했습니다.</div>
+          <div class="selected-answer-list">${buildTranslationAnswerFieldsV2(pi)}</div>
+        </div>
+        <div>
+          <div class="mini-label">어법 포인트 선택</div>
+          <div class="status-inline" style="margin-bottom:8px;">이 영역만 직접 편집하면 됩니다. 지문 안에서 어법 포인트 구간을 드래그한 뒤 추가하세요.</div>
+          ${buildGrammarSelectionAreaV3(pi)}
+          <div class="grammar-list" style="margin-top:10px;">${buildGrammarRowsV2(pi)}</div>
+        </div>
+        <div>
+          <div class="mini-label">어휘</div>
+          <div class="status-inline" style="margin-bottom:8px;">JSON에서 자동으로 가져온 어휘입니다.</div>
+          <table class="vocab-table">
+            <thead>
+              <tr>
+                <th>원형</th>
+                <th>뜻</th>
+                <th>동의어</th>
+                <th>반의어</th>
+                <th>반의어 뜻</th>
+                <th>상태</th>
+              </tr>
+            </thead>
+            <tbody id="vocab-body-${pi}">${buildVocabRows(pi)}</tbody>
+          </table>
+        </div>
+        <div>
+          <div class="mini-label">주제 답안</div>
+          <div class="status-inline" style="margin-bottom:8px;">JSON의 주제/요지 정보를 자동으로 사용합니다.</div>
+          ${buildQuestionAnswerFieldsV2(pi)}
+        </div>
+      </div>
+    </div>
+  `;
+}
+const renderSetupJsonFlowOverrideV2 = renderSetup;
+renderSetup = function(options = {}){
+  renderSetupJsonFlowOverrideV2(options);
+  const emptyNote = document.querySelector('#p-stack .passage-empty');
+  if(emptyNote){
+    emptyNote.textContent = '분석 JSON을 추가하면 왼쪽 탭에서 지문을 고르고, 오른쪽에서 어법 포인트만 계속 편집할 수 있습니다.';
+  }
+};
+function getSetupValidationV2(){
+  normalizeAllSetupStateV2();
+  const issues = [];
+  const ruleSummary = [
+    '주제 1개',
+    getQuestionCount('translate') > 0 ? `해석 ${getQuestionCount('translate')}개` : null,
+    getQuestionCount('vocab') > 0 ? `동의어·반의어 ${getQuestionCount('vocab')}개` : null,
+    getQuestionCount('grammar') > 0 ? `어법 ${getQuestionCount('grammar')}개` : null
+  ].filter(Boolean).join(', ');
+  passages.forEach((passage, index) => {
+    const detail = [];
+    if(getQuestionCount('translate') > 0 && getPassageLinesV3(passage).length !== getTranslationLinesV3(passage).length){
+      detail.push(`본문 ${getPassageLinesV3(passage).length}줄 / 해석 ${getTranslationLinesV3(passage).length}줄`);
+    }
+    if(getValidSelectedLinesV3(passage).length < getQuestionCount('translate')){
+      detail.push(`해석 ${getValidSelectedLinesV3(passage).length}개 / 최소 ${getQuestionCount('translate')}개 필요`);
+    }
+    if(getValidGrammarRowsV2(passage).length < getQuestionCount('grammar')){
+      detail.push(`어법 ${getValidGrammarRowsV2(passage).length}개 / 최소 ${getQuestionCount('grammar')}개 필요`);
+    }
+    if(getValidVocabRowsV2(passage).length < getQuestionCount('vocab')){
+      detail.push(`동의어·반의어 ${getValidVocabRowsV2(passage).length}개 / 최소 ${getQuestionCount('vocab')}개 필요`);
+    }
+    if(!String(passage?.questionAnswers?.topic || '').trim()){
+      detail.push('주제 답안이 비어 있습니다');
+    }
+    if(detail.length) issues.push(`지문 ${index + 1}: ${detail.join(', ')}`);
+  });
+  if(issues.length){
+    return {
+      ok:false,
+      message:`현재 출제 구성에 맞는 정보가 부족한 지문이 있습니다.\n\n${issues.map(item => `- ${item}`).join('\n')}\n\n각 지문마다 ${ruleSummary} 이상이 되도록 확인해 주세요.`
+    };
+  }
+  return { ok:true };
+}
+renderSetup({ preserveView:false, focusKey:null });
+</script>
+<script>
+function parseAnalysisSentenceNumberTextV2(value, max = Infinity){
+  const text = String(value || '');
+  const values = [];
+  for(const match of text.matchAll(/(\d+)\s*~\s*(\d+)|(\d+)/g)){
+    if(match[1] && match[2]){
+      const start = Number(match[1]);
+      const end = Number(match[2]);
+      const min = Math.min(start, end);
+      const maxValue = Math.max(start, end);
+      for(let current = min; current <= maxValue; current += 1){
+        values.push(current - 1);
+      }
+      continue;
+    }
+    if(match[3]){
+      values.push(Number(match[3]) - 1);
+    }
+  }
+  return [...new Set(values.filter(index => Number.isInteger(index) && index >= 0 && index < max))].sort((a, b) => a - b);
+}
+function normalizeComparableAnalysisTextV2(value){
+  return String(value || '')
+    .toLowerCase()
+    .replace(/[\s/.,!?;:'"`()[\]{}<>_-]+/g, '');
+}
+function resolveAnalysisDescriptiveLineNumbersV2(source = {}, sentenceEntries = []){
+  const pointSource = getObjectValueByKeysV2(source, ['출제포인트', 'questionPoints', 'points']);
+  const descriptivePoints = getObjectValueByKeysV2(pointSource, ['서술형 포인트', '서술형포인트', '서술형', 'descriptivePoints', 'descriptive']);
+  const max = sentenceEntries.length;
+  if(!Array.isArray(descriptivePoints) || !max) return [];
+  const indices = new Set();
+  descriptivePoints.forEach(entry => {
+    const parsedFromNumber = parseAnalysisSentenceNumberTextV2(
+      getObjectValueByKeysV2(entry, ['문장번호', '번호', 'sentenceNumber', 'lineNumber']),
+      max
+    );
+    parsedFromNumber.forEach(index => indices.add(index));
+    if(parsedFromNumber.length) return;
+    const originalText = String(getObjectValueByKeysV2(entry, ['영어원문', '원문', '영어', 'english', 'text']) || '').trim();
+    if(!originalText) return;
+    const normalizedOriginal = normalizeComparableAnalysisTextV2(originalText);
+    const matchIndex = sentenceEntries.findIndex(sentence => normalizeComparableAnalysisTextV2(sentence.english) === normalizedOriginal);
+    if(matchIndex >= 0) indices.add(matchIndex);
+  });
+  return [...indices].sort((a, b) => a - b);
+}
+function buildPassageFromAnalysisSourceV2(source = {}, fileName = '', index = 0){
+  const sentenceEntries = resolveAnalysisSentenceEntriesV2(source).filter(entry => entry.english);
+  if(!sentenceEntries.length) return null;
+  const text = sentenceEntries.map(entry => entry.english).join('\n').trim();
+  if(!text) return null;
+  const translationText = sentenceEntries.map(entry => entry.translation).join('\n').trim();
+  const descriptiveLines = resolveAnalysisDescriptiveLineNumbersV2(source, sentenceEntries);
+  const fallbackLines = sentenceEntries
+    .map((entry, lineIndex) => entry.translation ? lineIndex : -1)
+    .filter(lineIndex => lineIndex >= 0);
+  const selectedLines = descriptiveLines.length ? descriptiveLines : fallbackLines;
+  const vocabRows = resolveAnalysisVocabRowsV2(source);
+  const topic = resolveAnalysisTopicV2(source) || resolveAnalysisPassageTitleV2(source, fileName, index);
+  return normalizePassageV2({
+    title:resolveAnalysisPassageTitleV2(source, fileName, index),
+    text,
+    translationText,
+    selectedLines,
+    grammarSelections:[],
+    vocabRows,
+    questionAnswers:createQuestionAnswersV2({ topic })
+  });
+}
+function buildSetupPassageEditorV5(pi){
+  const passage = passages[pi];
+  const sourceLineCount = getPassageLinesV3(passage).length;
+  const translationLineCount = getTranslationLinesV3(passage).length;
+  const selectedCount = getValidSelectedLinesV3(passage).length;
+  return `
+    <div class="passage-editor-shell">
+      <div class="passage-editor-head">
+        <div>
+          <div class="passage-editor-title">${htmlEscV2(getPassageDisplayNameV2(passage, pi))}</div>
+          <div class="passage-editor-meta">
+            JSON 자동 입력 · 원문 ${sourceLineCount}줄 · 해석 ${translationLineCount}줄 · 자동 연결 ${selectedCount}문장
+            <br>원문, 해석, 주제, 어휘는 JSON에서 자동으로 채워집니다. 이 편집 영역에서는 지문 제목과 어법 포인트만 직접 손보면 됩니다.
+          </div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="removePassage(${pi})">이 지문 삭제</button>
+      </div>
+      <div class="passage-editor-body">
+        <div class="passage-source-grid">
+          <div class="passage-source-card" style="grid-column:1 / -1;">
+            <div class="mini-label">지문 이름</div>
+            <input
+              type="text"
+              data-restore-key="passage-${pi}-title"
+              placeholder="지문 제목을 직접 입력할 수 있습니다."
+              onchange="savePassageField(${pi}, 'title', this.value)"
+              value="${htmlEscV2(passage.title || '')}">
+            <div class="status-inline" style="margin-top:8px;">JSON 제목이 먼저 들어오고, 필요하면 여기서 바로 바꿀 수 있습니다.</div>
+          </div>
+          <div class="passage-source-card">
+            <div class="mini-label">원문</div>
+            ${buildReadonlyDisplayHtmlV2(passage.text, 'source', 'JSON에서 가져온 원문이 없습니다.')}
+          </div>
+          <div class="passage-source-card">
+            <div class="mini-label">해석</div>
+            ${buildReadonlyDisplayHtmlV2(passage.translationText, 'source', 'JSON에서 가져온 해석이 없습니다.')}
+          </div>
+        </div>
+        <div>
+          <div class="mini-label">문장 해석 자동 연결</div>
+          <div class="status-inline" style="margin-bottom:8px;">JSON의 서술형 포인트에 들어 있는 문장번호를 기준으로 자동 연결했습니다.</div>
+          <div class="selected-answer-list">${buildTranslationAnswerFieldsV2(pi)}</div>
+        </div>
+        <div>
+          <div class="mini-label">어법 포인트 선택</div>
+          <div class="status-inline" style="margin-bottom:8px;">이 영역에서만 직접 편집하면 됩니다. 지문 안에서 어법 포인트 구간을 드래그한 뒤 추가하세요.</div>
+          ${buildGrammarSelectionAreaV3(pi)}
+          <div class="grammar-list" style="margin-top:10px;">${buildGrammarRowsV2(pi)}</div>
+        </div>
+        <div>
+          <div class="mini-label">어휘</div>
+          <div class="status-inline" style="margin-bottom:8px;">JSON에서 자동으로 가져온 어휘입니다.</div>
+          <table class="vocab-table">
+            <thead>
+              <tr>
+                <th>원형</th>
+                <th>뜻</th>
+                <th>동의어</th>
+                <th>반의어</th>
+                <th>반의어 뜻</th>
+                <th>상태</th>
+              </tr>
+            </thead>
+            <tbody id="vocab-body-${pi}">${buildVocabRows(pi)}</tbody>
+          </table>
+        </div>
+        <div>
+          <div class="mini-label">주제 답안</div>
+          <div class="status-inline" style="margin-bottom:8px;">JSON의 주제/요지 정보를 자동으로 사용합니다.</div>
+          ${buildQuestionAnswerFieldsV2(pi)}
+        </div>
+      </div>
+    </div>
+  `;
+}
+renderSetup({ preserveView:false, focusKey:null });
 </script>
 </body>
 </html>
