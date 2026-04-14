@@ -1010,3 +1010,402 @@ function escapeHtml(value){
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;')
 }
+
+function getChoiceAnswerNumbersV2(value){
+  const normalized = String(value || '').replace(/[①②③④⑤]/g, function(symbol){
+    return CHOICE_SYMBOL_MAP[symbol] || ''
+  })
+  const matches = normalized.match(/[1-5]/g) || []
+  return Array.from(new Set(matches)).sort(function(left, right){
+    return Number(left) - Number(right)
+  })
+}
+
+function formatChoiceAnswerV2(numbers, allowMultiple){
+  const normalized = Array.from(new Set((Array.isArray(numbers) ? numbers : [])
+    .map(function(value){ return String(value || '').trim() })
+    .filter(function(value){ return /^[1-5]$/.test(value) })))
+    .sort(function(left, right){ return Number(left) - Number(right) })
+  if(!normalized.length) return ''
+  return allowMultiple ? normalized.join(',') : normalized[0]
+}
+
+function isMultipleChoiceAnswerV2(value){
+  return getChoiceAnswerNumbersV2(value).length > 1
+}
+
+function hasChoiceAnswerValueV2(answer, value){
+  return getChoiceAnswerNumbersV2(answer).includes(String(value))
+}
+
+function toggleChoiceAnswerValueV2(answer, value){
+  const choice = String(value || '').trim()
+  if(!/^[1-5]$/.test(choice)) return formatChoiceAnswerV2(getChoiceAnswerNumbersV2(answer), true)
+  const nextValues = getChoiceAnswerNumbersV2(answer).filter(function(current){
+    return current !== choice
+  })
+  if(nextValues.length === getChoiceAnswerNumbersV2(answer).length){
+    nextValues.push(choice)
+  }
+  return formatChoiceAnswerV2(nextValues, true)
+}
+
+function normalizeQuestionStateForMultipleAnswerV2(source, index){
+  const info = source || {}
+  const type = normalizeQuestionType(info.type)
+  const rawAnswer = String(info.answer || '').trim()
+  const hasExplicitMultipleAnswer = Object.prototype.hasOwnProperty.call(info, 'multipleAnswer') ||
+    Object.prototype.hasOwnProperty.call(info, 'isMultipleAnswer') ||
+    Object.prototype.hasOwnProperty.call(info, 'allowMultipleAnswer')
+  const explicitMultipleAnswer = Object.prototype.hasOwnProperty.call(info, 'multipleAnswer')
+    ? info.multipleAnswer
+    : (Object.prototype.hasOwnProperty.call(info, 'isMultipleAnswer') ? info.isMultipleAnswer : info.allowMultipleAnswer)
+  const multipleAnswer = type === '객관식'
+    ? (hasExplicitMultipleAnswer ? Boolean(explicitMultipleAnswer) : isMultipleChoiceAnswerV2(rawAnswer))
+    : false
+  return {
+    number: normalizeQuestionNumber(info.number, index + 1),
+    type: type,
+    problemType: normalizeProblemType(info.problemType || info.category || info.questionCategory),
+    answer: normalizeStoredAnswer(rawAnswer, type, multipleAnswer),
+    explanation: String(info.explanation || '').trim(),
+    multipleAnswer: multipleAnswer
+  }
+}
+
+function normalizeChoiceAnswer(value, allowMultiple){
+  return formatChoiceAnswerV2(getChoiceAnswerNumbersV2(value), allowMultiple)
+}
+
+function normalizeStoredAnswer(value, type, multipleAnswer){
+  const raw = String(value || '').trim()
+  if(type !== '객관식') return raw
+  const allowMultiple = typeof multipleAnswer === 'boolean' ? multipleAnswer : isMultipleChoiceAnswerV2(raw)
+  return normalizeChoiceAnswer(raw, allowMultiple)
+}
+
+function createQuestionState(index, source){
+  return normalizeQuestionStateForMultipleAnswerV2(source, index)
+}
+
+function renderCheckSetBuilder(){
+  checkSetState.questions = (Array.isArray(checkSetState.questions) ? checkSetState.questions : []).map(function(question, index){
+    return normalizeQuestionStateForMultipleAnswerV2(question, index)
+  })
+  syncMetaFields()
+  renderQuestions()
+  updateCheckSetSummary()
+}
+
+function renderQuestions(){
+  const hasQuestions = checkSetState.questions.length > 0
+  if(questionEmpty) questionEmpty.style.display = hasQuestions ? 'none' : 'flex'
+  if(questionWorkspace) questionWorkspace.style.display = hasQuestions ? 'flex' : 'none'
+
+  if(!hasQuestions){
+    questionList.innerHTML = ''
+    return
+  }
+
+  questionList.innerHTML = checkSetState.questions.map(function(question, index){
+    return '' +
+      '<article class="question-card" data-question-index="' + index + '">' +
+        '<div class="question-head">' +
+          '<div class="question-title">' +
+            '<strong>문항 ' + normalizeQuestionNumber(question.number, index + 1) + '</strong>' +
+            '<span>' + escapeHtml(getQuestionHelpText(question)) + '</span>' +
+          '</div>' +
+          '<div class="question-actions">' +
+            '<button class="btn btn-light" type="button" data-action="move-up">위로</button>' +
+            '<button class="btn btn-light" type="button" data-action="move-down">아래로</button>' +
+            '<button class="btn btn-danger" type="button" data-action="remove">삭제</button>' +
+          '</div>' +
+        '</div>' +
+        '<div class="field">' +
+          '<label>문항 유형</label>' +
+          '<div class="type-choice-grid">' +
+            CHECK_QUESTION_TYPES.map(function(type){
+              const activeClass = question.type === type ? ' active' : ''
+              return '<button class="type-choice-btn' + activeClass + '" type="button" data-action="set-type" data-value="' + escapeHtml(type) + '">' + escapeHtml(type) + '</button>'
+            }).join('') +
+          '</div>' +
+        '</div>' +
+        '<div class="field" style="margin-top:14px">' +
+          '<label>문제 유형</label>' +
+          '<select data-field="problemType">' +
+            CHECK_PROBLEM_TYPES.map(function(type){
+              const selected = question.problemType === type ? ' selected' : ''
+              return '<option value="' + escapeHtml(type) + '"' + selected + '>' + escapeHtml(type) + '</option>'
+            }).join('') +
+          '</select>' +
+        '</div>' +
+        '<div class="field" style="margin-top:14px">' +
+          '<label>정답</label>' +
+          renderAnswerEditor(question) +
+        '</div>' +
+        '<div class="field" style="margin-top:14px">' +
+          '<label>해설</label>' +
+          '<textarea data-field="explanation" placeholder="학생 제출 후 보여줄 해설을 입력하세요.">' + escapeHtml(question.explanation) + '</textarea>' +
+        '</div>' +
+      '</article>'
+  }).join('')
+
+  questionList.querySelectorAll('[data-action]').forEach(function(button){
+    button.addEventListener('click', onQuestionAction)
+  })
+  questionList.querySelectorAll('[data-field]').forEach(function(field){
+    field.addEventListener('input', onQuestionFieldInput)
+    field.addEventListener('change', onQuestionFieldInput)
+  })
+}
+
+function renderAnswerEditor(question){
+  if(question.type === '주관식'){
+    return '' +
+      '<textarea data-field="answer" placeholder="모범 답안 또는 기준 답안을 입력하세요.">' + escapeHtml(question.answer) + '</textarea>' +
+      '<div class="subjective-note">학생은 답지를 보고 <strong>맞음 / 틀림</strong>만 체크하지만 여기 입력한 답안은 결과 화면과 답지 자동 채우기에 같이 사용됩니다.</div>'
+  }
+
+  const answerValues = getChoiceAnswerNumbersV2(question.answer)
+  return '' +
+    '<div class="type-choice-grid" style="margin-bottom:10px">' +
+      '<button class="type-choice-btn' + (question.multipleAnswer ? '' : ' active') + '" type="button" data-action="set-answer-mode" data-value="single">단일 정답</button>' +
+      '<button class="type-choice-btn' + (question.multipleAnswer ? ' active' : '') + '" type="button" data-action="set-answer-mode" data-value="multiple">복수 정답</button>' +
+    '</div>' +
+    '<div class="helper-note"><strong>안내:</strong> 복수 정답을 켜면 "모두 고르시오" 문제를 만들 수 있고 JSON 정답은 <code>2,4</code> 형식으로 저장됩니다.</div>' +
+    '<div class="answer-choice-grid">' +
+      [1, 2, 3, 4, 5].map(function(choice){
+        const value = String(choice)
+        const activeClass = answerValues.includes(value) ? ' active' : ''
+        return '<button class="answer-choice-btn' + activeClass + '" type="button" data-action="set-answer" data-value="' + value + '">' + value + '</button>'
+      }).join('') +
+    '</div>'
+}
+
+function onQuestionAction(event){
+  const card = event.target.closest('[data-question-index]')
+  if(!card) return
+
+  const index = Number(card.dataset.questionIndex)
+  const action = event.target.dataset.action
+  const question = checkSetState.questions[index]
+  if(!question) return
+
+  if(action === 'set-type'){
+    const nextType = normalizeQuestionType(event.target.dataset.value)
+    if(question.type !== nextType){
+      question.type = nextType
+      if(nextType === '객관식'){
+        question.multipleAnswer = Boolean(question.multipleAnswer || isMultipleChoiceAnswerV2(question.answer))
+      }else{
+        question.multipleAnswer = false
+      }
+      question.answer = normalizeStoredAnswer(question.answer, nextType, question.multipleAnswer)
+    }
+    renderCheckSetBuilder()
+    return
+  }
+
+  if(action === 'set-answer-mode'){
+    if(question.type !== '객관식') return
+    question.multipleAnswer = event.target.dataset.value === 'multiple'
+    question.answer = normalizeStoredAnswer(question.answer, question.type, question.multipleAnswer)
+    renderCheckSetBuilder()
+    return
+  }
+
+  if(action === 'set-answer'){
+    if(question.type !== '객관식') return
+    question.answer = question.multipleAnswer
+      ? toggleChoiceAnswerValueV2(question.answer, event.target.dataset.value)
+      : normalizeChoiceAnswer(event.target.dataset.value, false)
+    renderCheckSetBuilder()
+    return
+  }
+
+  if(action === 'remove'){
+    if(checkSetState.questions.length === 1){
+      window.alert('CHECK 세트에는 최소 1문항이 필요합니다.')
+      return
+    }
+    checkSetState.questions.splice(index, 1)
+  }else if(action === 'move-up' && index > 0){
+    swapQuestions(index, index - 1)
+  }else if(action === 'move-down' && index < checkSetState.questions.length - 1){
+    swapQuestions(index, index + 1)
+  }
+
+  renderCheckSetBuilder()
+}
+
+function onQuestionFieldInput(event){
+  const card = event.target.closest('[data-question-index]')
+  if(!card) return
+
+  const index = Number(card.dataset.questionIndex)
+  const fieldName = event.target.dataset.field
+  const question = checkSetState.questions[index]
+  if(!question) return
+
+  if(fieldName === 'answer'){
+    question.multipleAnswer = question.type === '객관식'
+      ? Boolean(question.multipleAnswer || isMultipleChoiceAnswerV2(event.target.value))
+      : false
+    question.answer = normalizeStoredAnswer(event.target.value, question.type, question.multipleAnswer)
+    if(question.type === '객관식') event.target.value = question.answer
+    return
+  }
+
+  question[fieldName] = event.target.value
+}
+
+function downloadCurrentSet(){
+  const title = String(checkSetState.title || '').trim()
+  const setId = buildCheckSlug(checkSetState.id || title || 'check-set', true) || 'check-set'
+  const description = String(checkSetState.description || '').trim()
+
+  const questions = checkSetState.questions.map(function(question, index){
+    const type = normalizeQuestionType(question.type)
+    const number = normalizeQuestionNumber(question.number, index + 1)
+    const multipleAnswer = type === '객관식'
+      ? Boolean(question.multipleAnswer || isMultipleChoiceAnswerV2(question.answer))
+      : false
+    return {
+      id: 'q' + number,
+      number: number,
+      type: type,
+      problemType: normalizeProblemType(question.problemType),
+      prompt: '문항 ' + number,
+      answer: normalizeStoredAnswer(question.answer, type, multipleAnswer),
+      acceptableAnswers: [],
+      explanation: String(question.explanation || '').trim(),
+      multipleAnswer: multipleAnswer
+    }
+  }).filter(function(question){
+    return question.answer || question.explanation
+  })
+
+  if(!title){
+    window.alert('세트 제목을 입력해 주세요.')
+    setTitleInput.focus()
+    return
+  }
+  if(!questions.length){
+    window.alert('최소 1문항 이상 입력해 주세요.')
+    return
+  }
+
+  const invalidQuestion = questions.findIndex(function(question){
+    if(question.type !== '객관식') return false
+    const answerCount = getChoiceAnswerNumbersV2(question.answer).length
+    return question.multipleAnswer ? answerCount < 2 : answerCount !== 1
+  })
+  if(invalidQuestion >= 0){
+    const invalidNumber = questions[invalidQuestion] ? normalizeQuestionNumber(questions[invalidQuestion].number, invalidQuestion + 1) : (invalidQuestion + 1)
+    const invalidMessage = questions[invalidQuestion] && questions[invalidQuestion].multipleAnswer
+      ? '문항 ' + invalidNumber + '번은 복수 정답이므로 2개 이상 선택해 주세요.'
+      : '문항 ' + invalidNumber + '번의 정답을 입력해 주세요.'
+    window.alert(invalidMessage)
+    return
+  }
+
+  checkSetState.id = setId
+  syncMetaFields()
+
+  const payload = {
+    kind: 'check-set',
+    savedAt: new Date().toISOString(),
+    id: setId,
+    title: title,
+    description: description,
+    questions: questions.map(function(question){
+      return {
+        id: question.id,
+        number: question.number,
+        type: question.type,
+        problemType: question.problemType,
+        prompt: question.prompt,
+        answer: question.answer,
+        acceptableAnswers: question.acceptableAnswers,
+        explanation: question.explanation
+      }
+    })
+  }
+
+  downloadJsonFile(setId + '.json', payload)
+  updateSetStatus('"' + title + '" 세트 JSON을 다운로드했습니다.')
+}
+
+function applyAnswerTextImport(){
+  const entries = parseAnswerTextEntries(answerTextInput.value)
+  if(!entries.length){
+    window.alert('답안 텍스트에서 인식한 문항이 없습니다. `1번 / 정답 / 해설:` 형식을 확인해 주세요.')
+    return
+  }
+
+  if(!hasConfiguredQuestions()){
+    checkSetState.questions = []
+  }
+
+  let createdCount = 0
+  entries.forEach(function(entry){
+    const question = ensureQuestionByNumber(entry.number, entry.inferredType)
+    if(!question._existing) createdCount += 1
+    delete question._existing
+    question.number = entry.number
+    question.type = entry.inferredType
+    question.multipleAnswer = entry.inferredType === '객관식' ? isMultipleChoiceAnswerV2(entry.answer) : false
+    question.answer = normalizeStoredAnswer(entry.answer, entry.inferredType, question.multipleAnswer)
+    question.explanation = entry.explanation
+  })
+
+  sortQuestionsByNumber()
+  refreshStartNumberFromQuestions()
+  renderCheckSetBuilder()
+  updateSetStatus('답안 텍스트에서 ' + entries.length + '개 문항을 인식해 자동 반영했습니다.' + (createdCount ? ' 새 문항 ' + createdCount + '개도 함께 만들었습니다.' : ''))
+}
+
+function applyImportedProblemTypeToQuestion(question, type){
+  const normalizedType = normalizeProblemType(type)
+  question.problemType = normalizedType
+  if(isSubjectiveProblemType(normalizedType)){
+    question.type = '주관식'
+    question.multipleAnswer = false
+    question.answer = normalizeStoredAnswer(question.answer, question.type, false)
+    return
+  }
+  question.type = '객관식'
+  question.multipleAnswer = Boolean(question.multipleAnswer || isMultipleChoiceAnswerV2(question.answer))
+  question.answer = normalizeStoredAnswer(question.answer, question.type, question.multipleAnswer)
+}
+
+function inferQuestionTypeFromAnswer(answer){
+  const raw = String(answer || '').trim()
+  if(!raw) return '객관식'
+  const compact = String(raw)
+    .replace(/[①②③④⑤]/g, function(symbol){
+      return CHOICE_SYMBOL_MAP[symbol] || ''
+    })
+    .replace(/[\s,./|ㆍ·()\-]+/g, '')
+  if(getChoiceAnswerNumbersV2(raw).length && /^[1-5]+$/.test(compact)) return '객관식'
+  return '주관식'
+}
+
+function getQuestionHelpText(question){
+  if(question.type === '주관식'){
+    return '학생은 답지를 보고 맞음 또는 틀림만 체크합니다.'
+  }
+  return question.multipleAnswer
+    ? '학생은 정답 보기를 2개 이상 모두 골라 제출합니다.'
+    : '학생은 1, 2, 3, 4, 5 중 하나를 선택해 제출합니다.'
+}
+
+if(answerTextInput){
+  answerTextInput.placeholder = '1번\n정답: 3\n해설: 해설 내용을 입력합니다.\n\n2번\n정답: 2,4\n해설: 모두 고르시오 문항 해설을 입력합니다.'
+  var answerHelperNote = answerTextInput.parentElement && answerTextInput.parentElement.querySelector('.helper-note')
+  if(answerHelperNote){
+    answerHelperNote.innerHTML = '<strong>형식:</strong> 문항 번호 다음 줄에 <code>정답:</code>, 그 다음 줄에 <code>해설:</code> 형태로 넣으면 자동으로 반영됩니다. 복수 정답 객관식은 <code>2,4</code>, <code>24</code>, <code>②④</code>도 읽어 편집용으로 정규화합니다.'
+  }
+}
+
+renderCheckSetBuilder()
