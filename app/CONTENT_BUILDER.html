@@ -43,33 +43,7 @@ body::before{
   line-height:1.8;
   color:var(--ink2);
 }
-.tabbar{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:14px}
-.tab-btn{
-  display:flex;
-  flex-direction:column;
-  align-items:flex-start;
-  gap:4px;
-  padding:14px 16px;
-  border:1.5px solid var(--border);
-  border-radius:16px;
-  background:rgba(255,255,255,.88);
-  cursor:pointer;
-  color:var(--ink);
-  font-family:'Noto Sans KR',sans-serif;
-  text-align:left;
-  transition:all .16s ease;
-}
-.tab-btn:hover{border-color:rgba(200,55,26,.25);transform:translateY(-1px)}
-.tab-btn.active{
-  background:linear-gradient(180deg, rgba(200,55,26,.08), rgba(255,255,255,.96));
-  border-color:rgba(200,55,26,.32);
-  box-shadow:0 10px 24px rgba(26,24,20,.06);
-}
-.tab-kicker{font-family:'JetBrains Mono',monospace;font-size:.68rem;color:var(--muted);letter-spacing:1px}
-.tab-title{font-size:.96rem;font-weight:900}
-.tab-desc{font-size:.76rem;line-height:1.7;color:var(--muted)}
-.panel{display:none}
-.panel.active{display:block}
+.panel{display:block}
 .frame-shell{
   border:1.5px solid var(--border);
   border-radius:18px;
@@ -98,12 +72,10 @@ iframe{
   background:#fff;
 }
 @media (max-width:980px){
-  .tabbar{grid-template-columns:repeat(2,minmax(0,1fr))}
   iframe{min-height:680px;height:680px}
 }
 @media (max-width:640px){
   .wrap{padding:22px 14px}
-  .tabbar{grid-template-columns:1fr}
   iframe{min-height:620px;height:620px}
 }
 </style>
@@ -113,28 +85,6 @@ iframe{
   <div class="hd">
     <h1>CONTENT BUILDER</h1>
   </div>
-
-  <div class="tabbar">
-    <button class="tab-btn active" type="button" data-panel="prep-set-panel">
-      <span class="tab-kicker">TAB 01</span>
-      <span class="tab-title">PREP SET BUILDER</span>
-    </button>
-    <button class="tab-btn" type="button" data-panel="check-set-panel">
-      <span class="tab-kicker">TAB 02</span>
-      <span class="tab-title">CHECK SET BUILDER</span>
-    </button>
-  </div>
-
-  <section class="panel active" id="prep-set-panel">
-    <div class="frame-shell">
-      <div class="frame-toolbar">
-        <div>
-          <div class="frame-title">PREP SET BUILDER</div>
-        </div>
-      </div>
-      <iframe src="./PREP_SET_BUILDER.html" title="PREP SET BUILDER"></iframe>
-    </div>
-  </section>
 
   <section class="panel" id="check-set-panel">
     <div class="frame-shell">
@@ -147,15 +97,5 @@ iframe{
     </div>
   </section>
 </div>
-
-<script>
-document.querySelectorAll('.tab-btn').forEach(button => {
-  button.addEventListener('click', () => {
-    const panelId = button.dataset.panel;
-    document.querySelectorAll('.tab-btn').forEach(node => node.classList.toggle('active', node === button));
-    document.querySelectorAll('.panel').forEach(panel => panel.classList.toggle('active', panel.id === panelId));
-  });
-});
-</script>
 </body>
 </html>
